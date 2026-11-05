@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1c2f6e">
-<title>固有数詞クイズ</title>
+<title>韓国語 数詞クイズ</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23171a2e'/%3E%3Crect width='19' height='15' fill='%231c2f6e'/%3E%3Crect x='20' width='12' height='15' fill='%23b3203f'/%3E%3Crect y='16' width='12' height='16' fill='%23f2bc2f'/%3E%3Crect x='13' y='16' width='19' height='16' fill='%23a6d8c6'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -81,68 +81,86 @@
   .ramie    { --dye: var(--ramie);    --on-dye: var(--ink); }
   .ink      { --dye: var(--ink);      --on-dye: var(--ramie); }
 
-  /* ── 開始画面 ── */
+  /* ── ホーム ── */
   .start {
     min-height: 100%;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 1fr auto;
+    grid-template-rows: auto auto auto auto auto minmax(0, 1fr);
   }
   .hero {
     container-type: inline-size;
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-    grid-template-rows: auto auto;
+    grid-template-columns: repeat(11, minmax(0, 1fr));
   }
   .count-word {
     display: flex;
     align-items: flex-end;
-    padding: 2rem 4cqw 3cqw;
+    min-width: 0;
+    padding: 1.7rem 3cqw 2.5cqw;
     font-family: var(--display);
     font-weight: 700;
-    font-size: 26vw;
-    font-size: min(27cqw, 30dvh);
+    font-size: min(17cqw, 15dvh);
     line-height: 1;
+    white-space: nowrap;
     overflow: hidden; /* 書体の広い行ボックスで縦スクロールが出ないように */
-    animation: dye-in .5s ease backwards;
+    animation: dye-in .45s ease backwards;
   }
-  .count-word:nth-child(1) { grid-column: span 5; animation-delay: .15s; }
-  .count-word:nth-child(2) { grid-column: span 3; animation-delay: .5s; }
-  .count-word:nth-child(3) { grid-column: span 3; animation-delay: .85s; }
+  .count-word:nth-child(1) { grid-column: span 5; animation-delay: .05s; }
+  .count-word:nth-child(2) { grid-column: span 3; animation-delay: .2s; }
+  .count-word:nth-child(3) { grid-column: span 3; animation-delay: .35s; }
+  .hero[data-sys="mix"] .count-word { font-size: min(9.4cqw, 10dvh); padding-top: 2rem; }
+  .hero[data-sys="mix"] .count-word:nth-child(1) { grid-column: span 4; }
+  .hero[data-sys="mix"] .count-word:nth-child(2) { grid-column: span 3; }
+  .hero[data-sys="mix"] .count-word:nth-child(3) { grid-column: span 4; }
   .count-word .digit {
     position: absolute;
-    top: .55rem;
-    left: 4cqw;
+    top: .4rem;
+    left: 3cqw;
     font-family: var(--ui);
-    font-size: 1rem;
+    font-size: .875rem;
     font-weight: 700;
     line-height: 1.4;
   }
   @keyframes dye-in {
     from { background-color: var(--ramie); color: var(--ramie); }
   }
-  .intro {
-    grid-column: span 5;
+  .intro { padding: .6rem 1rem .7rem; }
+  .intro h1 { font-size: 1.25rem; font-weight: 700; line-height: 1.35; }
+  .intro p { font-size: .8125rem; line-height: 1.5; }
+
+  .picker { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .seg {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 3.5rem;
+    padding: .3rem .15rem;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .seg b { font-size: .9375rem; font-weight: 700; white-space: nowrap; }
+  .seg span { font-size: .75rem; white-space: nowrap; }
+  .seg[aria-pressed="true"] { --dye: var(--indigo); --on-dye: var(--ramie); }
+  .note { padding: .55rem 1rem; font-size: .8125rem; line-height: 1.55; }
+
+  .modes {
+    grid-template-columns: repeat(24, minmax(0, 1fr));
+    grid-auto-rows: minmax(5rem, 1fr);
+  }
+  .mode {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: .9rem 1rem;
-  }
-  .intro h1 { font-size: 1.4rem; font-weight: 700; line-height: 1.35; }
-  .intro p { margin-top: .3rem; font-size: .875rem; }
-
-  .menu { grid-template-columns: minmax(0, 1fr); grid-auto-rows: auto; }
-  .level {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    width: 100%;
-    min-height: 4.5rem;
-    padding: .5rem 1.1rem;
+    min-width: 0;
+    padding: .5rem .8rem .6rem;
     text-align: left;
   }
-  .level b { font-family: var(--display); font-size: clamp(1.375rem, 7vw, 1.75rem); font-weight: 700; line-height: 1.1; white-space: nowrap; }
-  .level span { font-size: .95rem; font-weight: 700; white-space: nowrap; }
-  .note { padding: .7rem 1.1rem; font-size: .8125rem; }
+  .mode b { font-size: 1.25rem; font-weight: 700; line-height: 1.3; }
+  .mode span { font-size: .8125rem; line-height: 1.4; }
+  .wide-14 { grid-column: span 14; }
+  .wide-10 { grid-column: span 10; }
+  .wide-24 { grid-column: span 24; }
 
   /* ── 問題画面 ── */
   .quiz {
@@ -155,6 +173,10 @@
       clamp(5.25rem, 15dvh, 8rem)
       clamp(5.25rem, 15dvh, 8rem)
       3.75rem;
+  }
+  .quiz[data-shape="wide"] {
+    min-height: 31rem;
+    grid-template-rows: 3.25rem minmax(0, 1fr) repeat(4, 3.1rem) 3.75rem;
   }
   .counter {
     grid-column: span 5;
@@ -198,25 +220,63 @@
     grid-template-rows: auto minmax(0, 1fr) auto;
     padding: .8rem 1rem .7rem;
     text-align: center;
+    overflow: hidden;
   }
-  .prompt { font-size: 1rem; font-weight: 700; }
+  .prompt { padding-inline: 2.5rem; font-size: 1rem; font-weight: 700; line-height: 1.5; }
   .prompt.verdict { font-size: 1.375rem; line-height: 1.16; }
+  .stage { container-type: size; display: grid; align-content: center; justify-items: center; gap: .35rem; min-height: 0; }
   .glyph {
-    align-self: center;
     font-family: var(--display);
     font-weight: 700;
-    font-size: min(calc(88cqw / var(--len, 1)), 50cqh);
+    font-size: min(calc(92cqw / var(--len, 1)), 78cqh);
     line-height: 1;
     white-space: nowrap;
   }
+  .stage:has(.gloss:not([hidden])) .glyph { font-size: min(calc(92cqw / var(--len, 1)), 52cqh); }
+  .stage.listening .glyph { font-size: min(calc(70cqw / var(--len, 1)), 30cqh); }
+  .gloss { font-size: 1rem; font-weight: 700; line-height: 1.3; }
   .reveal { min-height: 4.1rem; }
-  .reveal .pair { font-family: var(--display); font-size: 1.5rem; font-weight: 700; line-height: 1.3; }
-  .reveal .how { font-size: 1rem; line-height: 1.5; }
+  .reveal .pair { font-family: var(--display); font-size: 1.25rem; font-weight: 700; line-height: 1.3; }
+  .reveal .how { font-size: .9375rem; line-height: 1.45; }
+
+  .say {
+    position: absolute;
+    top: .3rem;
+    right: .3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    background: none;
+    z-index: 1;
+  }
+  .sound { display: block; width: 1.5rem; height: 1.5rem; flex: none; fill: currentColor; }
+  .sound path + path { fill: none; stroke: currentColor; stroke-width: 2; }
+
+  .listen { display: grid; gap: .4rem; width: 100%; max-width: 27rem; }
+  .listen-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: var(--seam); }
+  .listen-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .25rem;
+    min-width: 0;
+    min-height: 3rem;
+    padding: .2rem;
+    font-size: .875rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .play[data-on] { --dye: var(--gardenia); --on-dye: var(--ink); }
+  .listen-note { font-size: .8125rem; line-height: 1.4; }
 
   .option {
     display: flex;
     align-items: center;
     justify-content: center;
+    min-width: 0;
     padding: .25rem .5rem;
     font-family: var(--display);
     font-weight: 700;
@@ -226,6 +286,7 @@
   }
   .opt-a, .opt-d { grid-column: span 14; }
   .opt-b, .opt-c { grid-column: span 10; }
+  .quiz[data-shape="wide"] .option { grid-column: 1 / -1; font-size: clamp(1.15rem, 5.4vw, 1.625rem); }
   .option::after {
     position: absolute;
     top: .2rem;
@@ -280,6 +341,8 @@
   }
   .scrap .word { font-family: var(--display); font-size: clamp(1.05rem, 5.6vw, 1.75rem); font-weight: 700; line-height: 1.2; white-space: nowrap; }
   .scrap .num { font-size: .875rem; font-weight: 700; line-height: 1.3; }
+  .scraps.long .word { font-size: clamp(1rem, 4.6vw, 1.375rem); white-space: normal; word-break: keep-all; }
+  .scraps.long .num { font-size: .75rem; }
   .scrap.missed::after {
     content: "×";
     position: absolute;
@@ -293,11 +356,16 @@
   .action { width: 100%; padding: .5rem 1rem; font-size: 1.0625rem; font-weight: 700; }
 
   /* ── 横向き・広い画面：左に問題、右に操作 ── */
-  @media (orientation: landscape) and (min-width: 40rem) {
-    .start { grid-template-columns: minmax(0, 7fr) minmax(0, 6fr); grid-template-rows: minmax(0, 1fr); }
-    .menu { grid-auto-rows: 1fr; grid-template-rows: repeat(3, 1fr) auto; }
-    .level { min-height: 3.25rem; padding-inline: .8rem; gap: .5rem; }
-    .level b { font-size: clamp(1.25rem, 2.6vw, 1.75rem); }
+  @media (orientation: landscape) and (min-width: 34rem) {
+    .start {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 6fr);
+      grid-template-rows: auto auto auto auto minmax(0, 1fr);
+    }
+    .hero, .intro, .start > .picker, .sys-note { grid-column: 1; }
+    .modes { grid-column: 2; grid-row: 1 / -1; }
+    .voice-note { grid-column: 1; }
+    .count-word { font-size: min(11cqw, 15dvh); padding-top: 1.5rem; }
+    .hero[data-sys="mix"] .count-word { font-size: min(7cqw, 11dvh); }
 
     .quiz {
       min-height: 19rem;
@@ -311,16 +379,29 @@
     .next { grid-column: 12 / -1; grid-row: 4; }
     .option { font-size: clamp(1.5rem, 3.6vw, 4rem); }
 
+    .quiz[data-shape="wide"] {
+      min-height: 19rem;
+      grid-template-rows: 3rem repeat(4, minmax(0, 1fr)) 3.5rem;
+    }
+    .quiz[data-shape="wide"] .question { grid-row: 2 / span 5; }
+    .quiz[data-shape="wide"] .option { grid-column: 12 / -1; font-size: clamp(1.15rem, 2.5vw, 2rem); }
+    .quiz[data-shape="wide"] .opt-a { grid-row: 2; }
+    .quiz[data-shape="wide"] .opt-b { grid-row: 3; }
+    .quiz[data-shape="wide"] .opt-c { grid-row: 4; }
+    .quiz[data-shape="wide"] .opt-d { grid-row: 5; }
+    .quiz[data-shape="wide"] .next { grid-row: 6; }
+
     .result { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); grid-template-rows: 1fr auto; }
     .score { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; justify-content: flex-end; }
     .scraps { grid-column: 2; grid-row: 1 / span 2; }
     .actions { grid-column: 1; grid-row: 2; }
     .score h2 { font-size: clamp(3.25rem, 9vw, 8rem); }
     .scrap .word { font-size: clamp(1.05rem, 2.6vw, 2.5rem); }
+    .scraps.long .word { font-size: clamp(1rem, 1.9vw, 1.625rem); }
   }
 
   @media (hover: hover) {
-    .level:hover, .option:hover:enabled, .action:hover, .next:hover:enabled, .quit:hover { filter: brightness(1.1); }
+    .seg:hover, .mode:hover, .option:hover:enabled, .action:hover, .next:hover:enabled, .quit:hover, .listen-btn:hover { filter: brightness(1.1); }
   }
   button:active:enabled { filter: brightness(.92); }
 
@@ -332,20 +413,27 @@
 <body>
 <main>
   <section id="start" class="start cloth">
-    <div class="hero cloth">
-      <div class="patch indigo count-word"><span class="digit">1</span><span lang="ko">하나</span></div>
-      <div class="patch crimson count-word"><span class="digit">2</span><span lang="ko">둘</span></div>
-      <div class="patch gardenia count-word"><span class="digit">3</span><span lang="ko">셋</span></div>
-      <div class="patch ramie intro">
-        <h1>固有数詞クイズ</h1>
-        <p>数字からハングルを、ハングルから数字を4択で選びます。</p>
-      </div>
+    <div id="hero" class="hero cloth"></div>
+    <div class="patch ramie intro">
+      <h1>韓国語 数詞クイズ</h1>
+      <p>数え方とレベルを選んで、遊び方を押すと始まります。</p>
     </div>
-    <div class="menu cloth">
-      <button class="patch jade level" data-level="basic"><b>1〜10</b><span lang="ko">하나, 둘, 셋…</span></button>
-      <button class="patch plum level" data-level="tens"><b>10, 20, 30…</b><span lang="ko">열, 스물, 서른…</span></button>
-      <button class="patch ink level" data-level="all"><b>1〜99</b><span>全部まぜる</span></button>
-      <p class="patch ramie note">固有数詞で数えるのは99まで。100からは漢数詞の<span lang="ko">백</span>を使います。</p>
+    <div id="sys" class="picker cloth" role="group" aria-label="数え方">
+      <button class="patch ramie seg" data-sys="native"><b>固有数詞</b><span lang="ko">하나 둘 셋</span></button>
+      <button class="patch ramie seg" data-sys="sino"><b>漢数詞</b><span lang="ko">일 이 삼</span></button>
+      <button class="patch ramie seg" data-sys="mix"><b>場面ミックス</b><span>使い分ける</span></button>
+    </div>
+    <p id="sys-note" class="patch ramie note sys-note"></p>
+    <div id="levels" class="picker cloth" role="group" aria-label="レベル">
+      <button class="patch ramie seg" data-level="1"></button>
+      <button class="patch ramie seg" data-level="2"></button>
+      <button class="patch ramie seg" data-level="3"></button>
+    </div>
+    <div class="modes cloth">
+      <button class="patch indigo mode wide-14" data-mode="read"><b>読み方</b><span>ハングルと数字を結ぶ</span></button>
+      <button class="patch crimson mode wide-10" data-mode="listen"><b>聞き取り</b><span>音声で答える</span></button>
+      <button class="patch jade mode wide-24" data-mode="counter"><b>助数詞</b><span>개・명・잔・병 をつけて固有数詞で数える</span></button>
+      <p id="voice-note" class="patch gardenia note wide-24" hidden></p>
     </div>
   </section>
 
@@ -354,9 +442,26 @@
     <div id="track" class="track" aria-hidden="true"></div>
     <button id="quit" class="patch ink quit">やめる</button>
 
-    <div class="patch indigo question">
+    <div id="question" class="patch indigo question">
+      <button id="say" class="say" aria-label="発音を聞く" hidden>
+        <svg class="sound" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9H3z"/><path d="M15 8.5a5 5 0 0 1 0 7M17.5 6a8.5 8.5 0 0 1 0 12"/></svg>
+      </button>
       <p id="prompt" class="prompt" aria-live="polite"></p>
-      <p id="glyph" class="glyph"></p>
+      <div id="stage" class="stage">
+        <p id="glyph" class="glyph"></p>
+        <p id="gloss" class="gloss" hidden></p>
+        <div id="listen" class="listen" hidden>
+          <div class="listen-row">
+            <button id="play" class="patch ramie listen-btn play">
+              <svg class="sound" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9H3z"/><path d="M15 8.5a5 5 0 0 1 0 7M17.5 6a8.5 8.5 0 0 1 0 12"/></svg>
+              <span>もう一度</span>
+            </button>
+            <button id="slow" class="patch ramie listen-btn">ゆっくり</button>
+            <button id="peek" class="patch ramie listen-btn">文字で見る</button>
+          </div>
+          <p id="listen-note" class="listen-note" hidden></p>
+        </div>
+      </div>
       <div id="reveal" class="reveal" aria-live="polite"></div>
     </div>
 
@@ -376,7 +481,7 @@
     <ul id="scraps" class="scraps cloth"></ul>
     <div class="actions cloth">
       <button id="retry" class="patch ink action"></button>
-      <button id="back" class="patch jade action">範囲を選び直す</button>
+      <button id="back" class="patch jade action">ホームに戻る</button>
     </div>
   </section>
 </main>
@@ -385,35 +490,93 @@
 (() => {
   'use strict';
 
-  const ROUND_SIZE = 10;
+  /* ━━ 1. 数の読み方 ━━ */
+
   const ONES = ['', '하나', '둘', '셋', '넷', '다섯', '여섯', '일곱', '여덟', '아홉'];
+  const ONES_BEFORE_UNIT = ['', '한', '두', '세', '네', '다섯', '여섯', '일곱', '여덟', '아홉'];
   const TENS = ['', '열', '스물', '서른', '마흔', '쉰', '예순', '일흔', '여든', '아흔'];
-  const READINGS = {
+  const SINO_DIGITS = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'];
+
+  const READ_NATIVE = {
     1: 'ハナ', 2: 'トゥル', 3: 'セッ', 4: 'ネッ', 5: 'タソッ',
     6: 'ヨソッ', 7: 'イルゴプ', 8: 'ヨドル', 9: 'アホプ', 10: 'ヨル',
     20: 'スムル', 30: 'ソルン', 40: 'マフン', 50: 'シュィン',
     60: 'イェスン', 70: 'イルン', 80: 'ヨドゥン', 90: 'アフン',
   };
+  const READ_SINO = {
+    1: 'イル', 2: 'イ', 3: 'サム', 4: 'サ', 5: 'オ', 6: 'ユク', 7: 'チル', 8: 'パル', 9: 'ク',
+    10: 'シプ', 100: 'ペク', 1000: 'チョン', 10000: 'マン',
+  };
+
+  const nativeWord = n => TENS[Math.floor(n / 10)] + ONES[n % 10];
+
+  // 助数詞の前では 하나→한、둘→두、셋→세、넷→네、스물→스무 に変わる
+  const nativeBeforeUnit = n =>
+    n === 20 ? '스무' : TENS[Math.floor(n / 10)] + ONES_BEFORE_UNIT[n % 10];
+
+  function sinoBelow10000(n) {
+    let text = '';
+    for (const [unit, name] of [[1000, '천'], [100, '백'], [10, '십']]) {
+      const digit = Math.floor(n / unit) % 10;
+      if (digit) text += (digit === 1 ? '' : SINO_DIGITS[digit]) + name;
+    }
+    return text + SINO_DIGITS[n % 10];
+  }
+
+  // 만の位で分かち書きする（15,000 → 만 오천）
+  function sinoWord(n) {
+    const man = Math.floor(n / 10000);
+    const rest = n % 10000;
+    const parts = [];
+    if (man) parts.push(man === 1 ? '만' : sinoBelow10000(man) + '만');
+    if (rest) parts.push(sinoBelow10000(rest));
+    return parts.join(' ');
+  }
+
+  const fmt = n => n.toLocaleString('en-US');
+  const priceWord = n => `${sinoWord(n)} 원`;
+  const monthWord = m => ({ 6: '유월', 10: '시월' })[m] ?? `${sinoWord(m)}월`;
+  const dayWord = d => `${sinoWord(d)}일`;
+  const dateWord = (m, d) => `${monthWord(m)} ${dayWord(d)}`;
+
+  /* ━━ 2. 問題の材料 ━━ */
+
+  const ROUND_SIZE = 10;
+  const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  const UNITS = { 개: '個', 명: '人', 잔: '杯', 병: '本' };
+  const ITEMS = [
+    { id: 'apple', ko: '사과', ja: 'りんご', c: '개' },
+    { id: 'mandarin', ko: '귤', ja: 'みかん', c: '개' },
+    { id: 'bread', ko: '빵', ja: 'パン', c: '개' },
+    { id: 'egg', ko: '달걀', ja: '卵', c: '개' },
+    { id: 'student', ko: '학생', ja: '学生', c: '명' },
+    { id: 'friend', ko: '친구', ja: '友だち', c: '명' },
+    { id: 'child', ko: '아이', ja: '子ども', c: '명' },
+    { id: 'coffee', ko: '커피', ja: 'コーヒー', c: '잔' },
+    { id: 'tea', ko: '차', ja: 'お茶', c: '잔' },
+    { id: 'juice', ko: '주스', ja: 'ジュース', c: '잔' },
+    { id: 'beer', ko: '맥주', ja: 'ビール', c: '병' },
+    { id: 'soju', ko: '소주', ja: '焼酎', c: '병' },
+    { id: 'water', ko: '물', ja: '水', c: '병' },
+  ];
+  const itemById = id => ITEMS.find(item => item.id === id);
+
   // 字面や響きが似ていて取り違えやすい組み合わせ
-  const LOOKALIKE = {
+  const LOOK_NATIVE = {
     1: [2], 2: [1, 3], 3: [4, 2], 4: [3, 5], 5: [6, 4], 6: [5, 8, 10], 7: [9, 8], 8: [6, 10], 9: [7, 8],
     10: [6, 8, 20], 20: [10, 30], 30: [20, 80], 40: [70, 90], 50: [60, 40],
     60: [50, 80], 70: [40, 90], 80: [30, 60, 90], 90: [40, 70, 80],
   };
-  const DYES = ['crimson', 'gardenia', 'indigo', 'jade', 'plum', 'gardenia', 'crimson', 'jade', 'indigo', 'plum'];
-  const TRACK_WEIGHTS = [5, 3, 4, 6, 3, 5, 4, 3, 6, 4];
-  const CLOTH_ROWS = [[14, 10], [6, 10, 8], [10, 14], [8, 6, 10]];
+  const LOOK_SINO = {
+    1: [2, 7, 8], 2: [1, 4], 3: [4, 10], 4: [3, 10], 5: [9, 2],
+    6: [9, 1], 7: [1, 8], 8: [7, 1], 9: [6, 5], 10: [4, 3],
+  };
 
   const range = (from, to, step = 1) =>
     Array.from({ length: Math.floor((to - from) / step) + 1 }, (_, i) => from + i * step);
 
-  const LEVELS = {
-    basic: range(1, 10),
-    tens: range(10, 90, 10),
-    all: range(1, 99),
-  };
-
-  const word = n => TENS[Math.floor(n / 10)] + ONES[n % 10];
+  const ROUND_BIG = [...range(100, 900, 100), ...range(1000, 9000, 1000), ...range(10000, 90000, 10000)];
 
   function shuffle(list) {
     const a = [...list];
@@ -423,33 +586,377 @@
     }
     return a;
   }
+  const sample = (list, count) => shuffle(list).slice(0, count);
+  const pickOne = list => list[Math.floor(Math.random() * list.length)];
 
-  function wrongChoices(n, pool) {
+  /* ━━ 3. 間違いの選択肢 ━━ */
+
+  const poolOf = n => (n <= 10 ? range(1, 10) : n < 100 ? range(10, 99) : ROUND_BIG);
+
+  function wrongNumbers(sys, n) {
+    const native = sys === 'native';
+    const table = native ? LOOK_NATIVE : LOOK_SINO;
+    const pool = poolOf(n);
     const ten = n - n % 10;
     const one = n % 10;
     const close = [];
     const related = [];
-    if (ten && one) {
-      for (const x of LOOKALIKE[one]) if (x < 10) close.push(ten + x);
-      for (const x of LOOKALIKE[ten]) if (x >= 10 && x % 10 === 0) close.push(x + one);
-      related.push(...range(1, 9).map(x => ten + x), ...range(10, 90, 10).map(x => x + one));
+
+    if (n >= 100) {
+      const unit = 10 ** (String(n).length - 1);
+      const lead = n / unit;
+      close.push(...LOOK_SINO[lead].filter(x => x < 10).map(x => x * unit), n * 10, n / 10);
+      related.push(...range(1, 9).map(x => x * unit));
+    } else if (ten && one) {
+      for (const x of table[one]) if (x < 10) close.push(ten + x);
+      if (native) {
+        for (const x of table[ten]) if (x % 10 === 0) close.push(x + one);
+      } else {
+        for (const x of table[ten / 10]) if (x < 10) close.push(x * 10 + one);
+        close.push(one * 10 + ten / 10); // 27と72のように位を取り違える
+      }
+      related.push(...range(1, 9).map(x => ten + x), ...range(1, 9).map(x => x * 10 + one));
     } else {
-      close.push(...LOOKALIKE[n]);
+      close.push(...(table[n] ?? table[n / 10].map(x => x * 10)));
       related.push(...(one ? range(1, 9) : range(10, 90, 10)));
     }
+
     const wrong = [];
     for (const tier of [shuffle(close).slice(0, 2), shuffle(related), shuffle(pool)]) {
       for (const x of tier) {
-        if (wrong.length < 3 && x !== n && pool.includes(x) && !wrong.includes(x)) wrong.push(x);
+        if (x !== n && pool.includes(x) && !wrong.includes(x)) wrong.push(x);
       }
     }
     return wrong;
   }
 
+  function closePrices(n) {
+    const unit = 10 ** (String(n).length - 1);
+    const lead = Math.floor(n / unit);
+    const nextUnit = unit / 10;
+    const second = Math.floor(n / nextUnit) % 10;
+    const near = LOOK_SINO[lead].filter(x => x < 10).map(x => n + (x - lead) * unit);
+    if (second) near.push(...LOOK_SINO[second].filter(x => x < 10).map(x => n + (x - second) * nextUnit));
+    near.push(n + unit, n - unit, n * 10, n + nextUnit);
+    return shuffle(near).filter(x => x > 0 && x !== n && x % 100 === 0 && x < 100000);
+  }
+
+  // 値段を固有数詞で言ってしまった形（実際には使わない言い方）
+  function priceInNative(n) {
+    const man = Math.floor(n / 10000);
+    const cheon = Math.floor(n / 1000) % 10;
+    const baek = Math.floor(n / 100) % 10;
+    const parts = [];
+    if (man) parts.push(`${nativeBeforeUnit(man)}만`);
+    const rest = (cheon ? `${nativeBeforeUnit(cheon)}천` : '') + (baek ? `${nativeBeforeUnit(baek)}백` : '');
+    if (rest) parts.push(rest);
+    return `${parts.join(' ')} 원`;
+  }
+
+  function wrongDates(m, d) {
+    const months = (m <= 10 ? LOOK_SINO[m] : m === 11 ? [12, 1] : [11, 2]).filter(x => x <= 12 && d <= DAYS_IN_MONTH[x - 1]);
+    const days = wrongNumbers('sino', d).filter(x => x <= 28).slice(0, 4);
+    return shuffle([...months.map(x => [x, d]), ...days.map(x => [m, x])]);
+  }
+
+  function choiceSet(right, wrongs, lang) {
+    const picked = [...new Set(wrongs)].filter(text => text !== right).slice(0, 3);
+    return shuffle([
+      { text: right, lang, right: true },
+      ...picked.map(text => ({ text, lang, right: false })),
+    ]);
+  }
+
+  /* ━━ 4. 問題を組み立てる ━━
+     spec は問題の中身だけを持つ小さな記録。build(spec) で画面に出す形にする。 */
+
+  const SYS_NAME = { native: '固有数詞', sino: '漢数詞' };
+
+  function placeValues(n) {
+    return [...String(n)]
+      .map((digit, i, all) => Number(digit) * 10 ** (all.length - 1 - i))
+      .filter(Boolean);
+  }
+
+  function howToRead(sys, n) {
+    const reading = (sys === 'native' ? READ_NATIVE : READ_SINO)[n];
+    if (reading) return { text: reading };
+    const wordOf = sys === 'native' ? nativeWord : sinoWord;
+    return { text: placeValues(n).map(p => `${wordOf(p)} ${fmt(p)}`).join(' + '), lang: 'ko' };
+  }
+
+  function buildNumber({ sys, n, listen }) {
+    const wordOf = sys === 'native' ? nativeWord : sinoWord;
+    const word = wordOf(n);
+    const wrong = wrongNumbers(sys, n);
+    const base = {
+      key: `num:${sys}:${n}`,
+      word,
+      note: fmt(n),
+      say: word,
+      pair: `${fmt(n)} = ${word}`,
+      how: howToRead(sys, n),
+    };
+    if (listen) {
+      return { ...base, prompt: '聞こえた数はどれ？', choices: choiceSet(fmt(n), wrong.map(fmt), 'ja') };
+    }
+    if (Math.random() < .5) {
+      return {
+        ...base,
+        prompt: 'この韓国語はいくつ？',
+        show: { text: word, lang: 'ko' },
+        choices: choiceSet(fmt(n), wrong.map(fmt), 'ja'),
+      };
+    }
+    return {
+      ...base,
+      prompt: `この数を${SYS_NAME[sys]}で言うと？`,
+      show: { text: fmt(n), lang: 'ja' },
+      choices: choiceSet(word, wrong.map(wordOf), 'ko'),
+    };
+  }
+
+  function buildCounter({ item: id, n, ask, listen }) {
+    const item = itemById(id);
+    const unitJa = UNITS[item.c];
+    const form = nativeBeforeUnit(n);
+    const plain = nativeWord(n);
+    const koOf = (word, unit = item.c) => `${item.ko} ${word} ${unit}`;
+    const jaOf = x => `${item.ja} ${x}${unitJa}`;
+    const word = koOf(form);
+    const ja = jaOf(n);
+    const others = wrongNumbers('native', n);
+    const base = {
+      key: `cnt:${id}:${n}:${ask}`,
+      word,
+      note: ja,
+      say: word,
+      pair: `${ja} = ${word}`,
+      how: { text: `${plain === form ? '' : `助数詞の前で ${plain} → ${form}。`}${item.c} = ${unitJa}` },
+    };
+    if (listen) {
+      return { ...base, prompt: '聞こえたのはどれ？', choices: choiceSet(ja, others.map(jaOf), 'ja') };
+    }
+    if (ask === 'ja') {
+      return { ...base, prompt: 'どういう意味？', show: { text: word, lang: 'ko' }, choices: choiceSet(ja, others.map(jaOf), 'ja') };
+    }
+    if (ask === 'unit') {
+      return {
+        ...base,
+        prompt: '□に入る助数詞は？',
+        show: { text: `${item.ko} ${form} □`, lang: 'ko' },
+        gloss: ja,
+        choices: choiceSet(item.c, Object.keys(UNITS), 'ko'),
+      };
+    }
+    const wrongForms = [
+      ...(plain === form ? [] : [koOf(plain)]),
+      koOf(sinoWord(n)),
+      ...others.map(x => koOf(nativeBeforeUnit(x))),
+    ];
+    return { ...base, prompt: '個数の言い方は？', show: { text: ja, lang: 'ja' }, choices: choiceSet(word, wrongForms, 'ko') };
+  }
+
+  function buildPrice({ n, listen }) {
+    const word = priceWord(n);
+    const ja = `${fmt(n)}ウォン`;
+    const near = closePrices(n);
+    const base = {
+      key: `price:${n}`,
+      word,
+      note: ja,
+      say: word,
+      pair: `${ja} = ${word}`,
+      how: { text: '値段は漢数詞で言います' },
+    };
+    if (listen) {
+      return { ...base, prompt: '聞こえた値段はどれ？', choices: choiceSet(ja, near.map(x => `${fmt(x)}ウォン`), 'ja') };
+    }
+    return {
+      ...base,
+      prompt: '値段の言い方は？',
+      show: { text: ja, lang: 'ja' },
+      choices: choiceSet(word, [priceInNative(n), ...near.map(priceWord)], 'ko'),
+    };
+  }
+
+  function buildDate({ m, d, listen }) {
+    const word = dateWord(m, d);
+    const ja = `${m}月${d}日`;
+    const near = wrongDates(m, d);
+    const irregular = { 6: '육월', 10: '십월' }[m];
+    const base = {
+      key: `date:${m}:${d}`,
+      word,
+      note: ja,
+      say: word,
+      pair: `${ja} = ${word}`,
+      how: { text: irregular ? `日付は漢数詞。${m}月は ${irregular} ではなく ${monthWord(m)}` : '日付は漢数詞で言います' },
+    };
+    if (listen) {
+      return { ...base, prompt: '聞こえた日付はどれ？', choices: choiceSet(ja, near.map(([x, y]) => `${x}月${y}日`), 'ja') };
+    }
+    const wrongForms = [
+      ...(irregular ? [`${irregular} ${dayWord(d)}`] : []),
+      `${nativeBeforeUnit(m)} 월 ${nativeBeforeUnit(d)} 일`,
+      ...near.map(([x, y]) => dateWord(x, y)),
+    ];
+    return { ...base, prompt: '日付の言い方は？', show: { text: ja, lang: 'ja' }, choices: choiceSet(word, wrongForms, 'ko') };
+  }
+
+  const BUILDERS = { num: buildNumber, cnt: buildCounter, price: buildPrice, date: buildDate };
+
+  function build(spec) {
+    const q = BUILDERS[spec.t](spec);
+    if (spec.listen) q.key += ':listen';
+    return { ...q, listen: Boolean(spec.listen), spec };
+  }
+
+  /* ━━ 5. 1回分の問題を選ぶ ━━ */
+
+  function pickNumbers(sys, level) {
+    if (level === 1) return shuffle(range(1, 10));
+    if (level === 2) {
+      // 2桁は 스물・서른 などの十の位を覚えないと読めないので、切りのいい数を必ず混ぜる
+      const others = sample(range(11, 99).filter(n => n % 10), ROUND_SIZE - 3);
+      return shuffle([...sample(range(20, 90, 10), 3), ...others]);
+    }
+    if (sys === 'sino') return shuffle([...sample(range(1, 99), 6), ...sample(ROUND_BIG, 4)]);
+    return sample(range(1, 99), ROUND_SIZE);
+  }
+
+  function pickPrice(level) {
+    const small = () => pickOne(range(1, 9)) * pickOne([100, 1000]);
+    const large = () => (Math.random() < .5
+      ? pickOne(range(1, 9)) * 1000 + pickOne(range(1, 9)) * 100
+      : pickOne(range(1, 9)) * 10000 + pickOne(range(0, 9)) * 1000);
+    if (level === 1) return small();
+    if (level === 2) return large();
+    return Math.random() < .5 ? small() : large();
+  }
+
+  function pickDate(level) {
+    const m = pickOne(range(1, 12));
+    const max = DAYS_IN_MONTH[m - 1];
+    const d = pickOne(level === 1 ? range(1, 10) : level === 2 ? range(11, max) : range(1, max));
+    return { m, d };
+  }
+
+  function sceneSpecs(level) {
+    const seen = new Set();
+    const specs = [];
+    const add = (count, make) => {
+      while (specs.length < count) {
+        const spec = make();
+        const key = build(spec).key;
+        if (!seen.has(key)) { seen.add(key); specs.push(spec); }
+      }
+    };
+    const numbers = pickNumbers('native', level);
+    add(4, () => ({ t: 'cnt', item: pickOne(ITEMS).id, n: numbers[specs.length], ask: 'ko' }));
+    add(7, () => ({ t: 'price', n: pickPrice(level) }));
+    add(ROUND_SIZE, () => ({ t: 'date', ...pickDate(level) }));
+    return shuffle(specs);
+  }
+
+  function counterSpecs(level) {
+    const asks = shuffle(['ko', 'ko', 'ko', 'ko', 'unit', 'unit', 'unit', 'ja', 'ja', 'ja']);
+    const units = Object.keys(UNITS);
+    return pickNumbers('native', level).map((n, i) => ({
+      t: 'cnt',
+      item: pickOne(ITEMS.filter(item => item.c === units[i % units.length])).id,
+      n,
+      ask: asks[i],
+    }));
+  }
+
+  function roundSpecs(mode, sys, level) {
+    if (mode === 'counter') return counterSpecs(level);
+    const specs = sys === 'mix'
+      ? sceneSpecs(level)
+      : pickNumbers(sys, level).map(n => ({ t: 'num', sys, n }));
+    return mode === 'listen' ? specs.map(spec => ({ ...spec, listen: true })) : specs;
+  }
+
+  /* ━━ 6. 音声（Web Speech API） ━━ */
+
+  const speech = (() => {
+    const synth = window.speechSynthesis || null;
+    let voice = null;
+    let current = null;
+    let watchdog = 0;
+
+    function refresh() {
+      if (!synth) return;
+      const voices = synth.getVoices();
+      voice = voices.find(v => /^ko[-_]KR$/i.test(v.lang)) || voices.find(v => /^ko\b/i.test(v.lang)) || null;
+    }
+
+    function stop() {
+      clearTimeout(watchdog);
+      current = null;
+      if (synth && (synth.speaking || synth.pending)) synth.cancel();
+    }
+
+    function speak(text, { slow = false, onStart, onEnd, onFail } = {}) {
+      stop();
+      if (!synth) { if (onFail) onFail(); return; }
+      if (synth.paused) synth.resume();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ko-KR';
+      utterance.rate = slow ? .6 : .9;
+      if (voice) utterance.voice = voice;
+      const mine = fn => (...args) => { if (current === utterance && fn) fn(...args); };
+      utterance.onstart = mine(() => { clearTimeout(watchdog); if (onStart) onStart(); });
+      utterance.onend = mine(() => { clearTimeout(watchdog); if (onEnd) onEnd(); });
+      utterance.onerror = mine(() => { clearTimeout(watchdog); if (onFail) onFail(); });
+      current = utterance;
+      synth.speak(utterance);
+      watchdog = setTimeout(mine(onFail), 3000); // 無音のまま止まる端末があるため
+    }
+
+    if (synth) {
+      refresh();
+      if (synth.addEventListener) synth.addEventListener('voiceschanged', refresh);
+    }
+    return { speak, stop, refresh, supported: Boolean(synth), hasVoice: () => Boolean(voice) };
+  })();
+
+  /* ━━ 7. 画面 ━━ */
+
+  const SYSTEMS = {
+    native: {
+      note: '韓国語もともとの数え方で、日本語の「ひとつ、ふたつ」にあたります。物や人の数に使います。',
+      hero: [['1', '하나'], ['2', '둘'], ['3', '셋']],
+      levels: [['1〜10', '하나〜열'], ['2桁', '열〜아흔아홉'], ['ミックス', '1〜99']],
+    },
+    sino: {
+      note: '漢字から来た数え方で、日本語の「いち、に、さん」にあたります。値段や日付に使います。',
+      hero: [['1', '일'], ['2', '이'], ['3', '삼']],
+      levels: [['1〜10', '일〜십'], ['2桁', '십일〜구십구'], ['ミックス', '百・千・万も']],
+    },
+    mix: {
+      note: '個数は固有数詞、値段と日付は漢数詞。場面に合う言い方を選びます。',
+      hero: [['3個', '세 개'], ['3月', '삼월'], ['1,000ウォン', '천 원']],
+      levels: [['小さい数', '1〜10'], ['大きい数', '2桁以上'], ['ミックス', 'ぜんぶ']],
+    },
+  };
+  const DYES = ['crimson', 'gardenia', 'indigo', 'jade', 'plum', 'gardenia', 'crimson', 'jade', 'indigo', 'plum'];
+  const TRACK_WEIGHTS = [5, 3, 4, 6, 3, 5, 4, 3, 6, 4];
+  const CLOTH_ROWS = [[14, 10], [6, 10, 8], [10, 14], [8, 6, 10]];
+
   const $ = id => document.getElementById(id);
   const screens = { start: $('start'), quiz: $('quiz'), result: $('result') };
   const options = [...document.querySelectorAll('.option')];
-  const el = { counter: $('counter'), track: $('track'), prompt: $('prompt'), glyph: $('glyph'), reveal: $('reveal'), next: $('next') };
+  const el = {
+    counter: $('counter'), track: $('track'), prompt: $('prompt'), stage: $('stage'),
+    glyph: $('glyph'), gloss: $('gloss'), reveal: $('reveal'), next: $('next'), say: $('say'),
+    listen: $('listen'), play: $('play'), listenNote: $('listen-note'), voiceNote: $('voice-note'),
+  };
+
+  let sys = 'native';
+  let level = 1;
+  let round = null;
 
   function show(name) {
     for (const [key, screen] of Object.entries(screens)) screen.hidden = key !== name;
@@ -464,21 +971,45 @@
     return node;
   }
 
-  let round = null;
+  function renderHero() {
+    const dyes = ['indigo', 'crimson', 'gardenia'];
+    const hero = $('hero');
+    hero.dataset.sys = sys;
+    hero.replaceChildren(...SYSTEMS[sys].hero.map(([label, word], i) => {
+      const patch = make('div', `patch ${dyes[i]} count-word`);
+      patch.append(make('span', 'digit', label), make('span', '', word, 'ko'));
+      return patch;
+    }));
+  }
 
-  function startRound(numbers, pool) {
-    round = {
-      pool,
-      questions: numbers.map(n => ({
-        n,
-        askWord: Math.random() < .5,
-        choices: shuffle([n, ...wrongChoices(n, pool)]),
-      })),
-      index: 0,
-      results: [],
-      answered: false,
-    };
-    el.track.replaceChildren(...numbers.map((_, i) => {
+  function renderPickers() {
+    document.querySelectorAll('[data-sys]:not(.hero)').forEach(button => {
+      button.setAttribute('aria-pressed', String(button.dataset.sys === sys));
+    });
+    $('sys-note').textContent = SYSTEMS[sys].note;
+    document.querySelectorAll('[data-level]').forEach((button, i) => {
+      const [title, sub] = SYSTEMS[sys].levels[i];
+      button.setAttribute('aria-pressed', String(i + 1 === level));
+      button.replaceChildren(make('b', '', `Lv.${i + 1} ${title}`), make('span', '', sub, /[가-힣]/.test(sub) ? 'ko' : undefined));
+    });
+  }
+
+  function voiceHelp() {
+    const ua = navigator.userAgent;
+    if (/iPhone|iPad/.test(ua)) return '韓国語の音声が見つかりません。設定の「読み上げコンテンツ」で韓国語の声を追加すると聞き取りが使えます。';
+    if (/Android/.test(ua)) return '韓国語の音声が見つかりません。端末の設定の「テキスト読み上げ」で韓国語の音声データを追加すると聞き取りが使えます。';
+    return '韓国語の音声が見つかりません。端末の言語設定で韓国語の音声を追加すると聞き取りが使えます。聞き取りは「文字で見る」でも進められます。';
+  }
+
+  function updateVoiceNote() {
+    speech.refresh();
+    el.voiceNote.hidden = speech.hasVoice();
+    el.voiceNote.textContent = speech.hasVoice() ? '' : voiceHelp();
+  }
+
+  function startRound(specs, mode) {
+    round = { specs, mode, sys, level, index: 0, results: [], answered: false, q: null };
+    el.track.replaceChildren(...specs.map((_, i) => {
       const bit = make('span', `bit ${DYES[i % DYES.length]}`);
       bit.style.flexGrow = TRACK_WEIGHTS[i % TRACK_WEIGHTS.length];
       return bit;
@@ -487,69 +1018,94 @@
     showQuestion();
   }
 
+  // 全角1、半角0.62、空白0.35文字として、見出しの幅を見積もる
+  const textWidth = text => [...text].reduce((sum, ch) => sum + (ch === ' ' ? .35 : ch < '\u0080' ? .62 : 1.02), 0);
+
+  function setGlyph(text, lang) {
+    el.glyph.textContent = text;
+    el.glyph.lang = lang;
+    el.glyph.style.setProperty('--len', textWidth(text));
+    el.glyph.hidden = false;
+  }
+
+  function playQuestion(slow = false) {
+    const { q } = round;
+    el.play.dataset.on = '';
+    speech.speak(q.say, {
+      slow,
+      onStart() { el.listenNote.hidden = true; },
+      onEnd() { delete el.play.dataset.on; },
+      onFail() {
+        delete el.play.dataset.on;
+        el.listenNote.textContent = speech.supported
+          ? '音声が再生できませんでした。「文字で見る」で続けられます。'
+          : 'この端末は読み上げに対応していません。「文字で見る」で続けられます。';
+        el.listenNote.hidden = false;
+      },
+    });
+  }
+
   function showQuestion() {
-    const { questions, index } = round;
-    const q = questions[index];
+    const q = build(round.specs[round.index]);
+    round.q = q;
     round.answered = false;
 
-    el.counter.textContent = `${index + 1} / ${questions.length}`;
-    el.track.children[index].dataset.state = 'now';
-    el.prompt.textContent = q.askWord ? 'この韓国語はいくつ？' : 'この数を韓国語で言うと？';
+    el.counter.textContent = `${round.index + 1} / ${round.specs.length}`;
+    el.track.children[round.index].dataset.state = 'now';
+    el.prompt.textContent = q.prompt;
     el.prompt.classList.remove('verdict');
-
-    const text = q.askWord ? word(q.n) : String(q.n);
-    el.glyph.textContent = text;
-    el.glyph.lang = q.askWord ? 'ko' : 'ja';
-    el.glyph.style.setProperty('--len', q.askWord ? text.length * 1.02 : text.length * .62);
     el.reveal.replaceChildren();
+    el.say.hidden = true;
 
+    el.stage.classList.toggle('listening', q.listen);
+    el.listen.hidden = !q.listen;
+    el.listenNote.hidden = true;
+    el.gloss.hidden = !q.gloss;
+    el.gloss.textContent = q.gloss || '';
+    if (q.show) setGlyph(q.show.text, q.show.lang);
+    else el.glyph.hidden = true;
+
+    screens.quiz.dataset.shape = q.choices.some(c => textWidth(c.text) > 4.2) ? 'wide' : 'short';
     options.forEach((button, i) => {
       const choice = q.choices[i];
-      button.textContent = q.askWord ? String(choice) : word(choice);
-      button.lang = q.askWord ? 'ja' : 'ko';
+      button.textContent = choice.text;
+      button.lang = choice.lang;
       button.disabled = false;
       delete button.dataset.state;
     });
     el.next.disabled = true;
     el.next.textContent = '';
     options[0].focus({ preventScroll: true });
+    if (q.listen) playQuestion();
   }
 
   function answer(i) {
-    if (round.answered) return;
+    if (!round || round.answered) return;
     round.answered = true;
 
-    const q = round.questions[round.index];
-    const correct = q.choices[i] === q.n;
-    round.results.push({ n: q.n, correct });
+    const { q } = round;
+    const correct = q.choices[i].right;
+    round.results.push({ q, correct });
 
     options.forEach((button, j) => {
       button.disabled = true;
-      button.dataset.state = q.choices[j] === q.n ? 'correct' : j === i ? 'wrong' : 'rest';
+      button.dataset.state = q.choices[j].right ? 'correct' : j === i ? 'wrong' : 'rest';
     });
-
-    const bit = el.track.children[round.index];
-    bit.dataset.state = correct ? 'done' : 'miss';
+    el.track.children[round.index].dataset.state = correct ? 'done' : 'miss';
 
     el.prompt.textContent = correct ? '○ 正解' : '× 不正解';
     el.prompt.classList.add('verdict');
-    el.reveal.replaceChildren(
-      make('p', 'pair', `${q.n} = ${word(q.n)}`),
-      howToRead(q.n),
-    );
+    el.listen.hidden = true;
+    el.gloss.hidden = true;
+    if (q.listen) { el.stage.classList.remove('listening'); setGlyph(q.word, 'ko'); }
+    if (q.show && q.show.text.includes('□')) setGlyph(q.word, 'ko');
+    el.reveal.replaceChildren(make('p', 'pair', q.pair), make('p', 'how', q.how.text, q.how.lang));
+    el.say.hidden = false;
 
-    const last = round.index === round.questions.length - 1;
+    const last = round.index === round.specs.length - 1;
     el.next.textContent = last ? '結果を見る' : '次の問題';
     el.next.disabled = false;
     el.next.focus({ preventScroll: true });
-  }
-
-  // 1語の数は読み方を、合成語は組み立てを見せる
-  function howToRead(n) {
-    const ten = n - n % 10;
-    const one = n % 10;
-    if (READINGS[n]) return make('p', 'how', READINGS[n]);
-    return make('p', 'how', `${word(ten)} ${ten} + ${word(one)} ${one}`, 'ko');
   }
 
   function clothSpans(count) {
@@ -564,53 +1120,105 @@
   }
 
   function showResult() {
-    const { results, pool } = round;
-    const wrong = results.filter(r => !r.correct).map(r => r.n);
-    const score = results.length - wrong.length;
+    speech.stop();
+    const { results, mode } = round;
+    const wrong = results.filter(r => !r.correct).map(r => r.q.spec);
+    const right = results.length - wrong.length;
 
-    $('score').textContent = `${score} / ${results.length}`;
-    $('score').setAttribute('aria-label', `${results.length}問中${score}問正解`);
+    $('score').textContent = `${right} / ${results.length}`;
+    $('score').setAttribute('aria-label', `${results.length}問中${right}問正解`);
     $('score-note').textContent = wrong.length
-      ? '白い布が間違えた数字です。'
+      ? '白い布が間違えた問題です。'
       : '全問正解です。布がすべて染まりました。';
 
-    const spans = clothSpans(results.length);
+    const long = results.some(r => textWidth(r.q.word) > 5);
+    const spans = long ? results.map(() => 12) : clothSpans(results.length);
+    if (long && results.length % 2) spans[results.length - 1] = 24;
+    $('scraps').classList.toggle('long', long);
     $('scraps').replaceChildren(...results.map((r, i) => {
       const scrap = make('li', `patch scrap ${r.correct ? DYES[i % DYES.length] : 'ramie missed'}`);
       scrap.style.gridColumn = `span ${spans[i]}`;
-      scrap.append(make('span', 'word', word(r.n), 'ko'), make('span', 'num', String(r.n)));
+      scrap.append(make('span', 'word', r.q.word, 'ko'), make('span', 'num', r.q.note));
       return scrap;
     }));
 
     const retry = $('retry');
-    retry.textContent = wrong.length ? `間違えた${wrong.length}問をやり直す` : '同じ範囲でもう一度';
-    retry.onclick = () => startRound(wrong.length ? shuffle(wrong) : shuffle(pool).slice(0, ROUND_SIZE), pool);
+    retry.textContent = wrong.length ? `間違えた${wrong.length}問をやり直す` : 'もう一度';
+    retry.onclick = () => startRound(wrong.length ? shuffle(wrong) : roundSpecs(mode, round.sys, round.level), mode);
 
     show('result');
     retry.focus({ preventScroll: true });
   }
 
-  document.querySelectorAll('.level').forEach(button => {
+  function goHome() {
+    speech.stop();
+    round = null;
+    show('start');
+  }
+
+  /* ━━ 8. 操作 ━━ */
+
+  document.querySelectorAll('#sys [data-sys]').forEach(button => {
     button.addEventListener('click', () => {
-      const pool = LEVELS[button.dataset.level];
-      startRound(shuffle(pool).slice(0, ROUND_SIZE), pool);
+      sys = button.dataset.sys;
+      renderHero();
+      renderPickers();
     });
+  });
+  document.querySelectorAll('[data-level]').forEach(button => {
+    button.addEventListener('click', () => {
+      level = Number(button.dataset.level);
+      renderPickers();
+    });
+  });
+  document.querySelectorAll('[data-mode]').forEach(button => {
+    button.addEventListener('click', () => startRound(roundSpecs(button.dataset.mode, sys, level), button.dataset.mode));
   });
   options.forEach((button, i) => button.addEventListener('click', () => answer(i)));
   el.next.addEventListener('click', () => {
+    speech.stop();
     round.index += 1;
-    if (round.index < round.questions.length) showQuestion();
+    if (round.index < round.specs.length) showQuestion();
     else showResult();
   });
-  $('quit').addEventListener('click', () => show('start'));
-  $('back').addEventListener('click', () => show('start'));
+  $('quit').addEventListener('click', goHome);
+  $('back').addEventListener('click', goHome);
+  el.play.addEventListener('click', () => playQuestion());
+  $('slow').addEventListener('click', () => playQuestion(true));
+  $('peek').addEventListener('click', () => setGlyph(round.q.word, 'ko'));
+  el.say.addEventListener('click', () => {
+    speech.speak(round.q.say, {
+      onFail() {
+        if (!el.reveal.querySelector('.say-failed')) {
+          el.reveal.append(make('p', 'how say-failed', '音声を再生できませんでした'));
+        }
+      },
+    });
+  });
 
   // 1〜4キーでも答えられる
   document.addEventListener('keydown', e => {
-    if (screens.quiz.hidden || round.answered || e.repeat) return;
+    if (screens.quiz.hidden || !round || round.answered || e.repeat) return;
     const i = ['1', '2', '3', '4'].indexOf(e.key);
     if (i >= 0) answer(i);
   });
+
+  renderHero();
+  renderPickers();
+  // 音声の一覧は遅れて届くことがあるので、少し待ってから案内を判断する
+  setTimeout(updateVoiceNote, 1500);
+  if (speech.supported && window.speechSynthesis.addEventListener) {
+    window.speechSynthesis.addEventListener('voiceschanged', updateVoiceNote);
+  }
+
+  // 自動テスト用の入口。テストのときだけ外から渡される
+  if (window.__QUIZ_HOOK__) {
+    window.__QUIZ_HOOK__({
+      build, roundSpecs, ITEMS, ROUND_BIG, DAYS_IN_MONTH, range,
+      playSpec: spec => startRound([spec], 'read'),
+      rightIndex: () => round.q.choices.findIndex(c => c.right),
+    });
+  }
 })();
 </script>
 </body>
