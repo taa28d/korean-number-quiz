@@ -158,6 +158,7 @@
   }
   .mode b { font-size: 1.25rem; font-weight: 700; line-height: 1.3; }
   .mode span { font-size: .8125rem; line-height: 1.4; }
+  .mode:disabled { --dye: var(--ramie); --on-dye: var(--ink-soft); cursor: default; }
   .wide-14 { grid-column: span 14; }
   .wide-10 { grid-column: span 10; }
   .wide-24 { grid-column: span 24; }
@@ -235,6 +236,33 @@
   .stage:has(.gloss:not([hidden])) .glyph { font-size: min(calc(92cqw / var(--len, 1)), 52cqh); }
   .stage.listening .glyph { font-size: min(calc(70cqw / var(--len, 1)), 30cqh); }
   .gloss { font-size: 1rem; font-weight: 700; line-height: 1.3; }
+  .receipt {
+    width: 100%;
+    max-width: 25rem;
+    padding: .4rem .6rem;
+    background: var(--ramie);
+    color: var(--ink);
+    font-size: clamp(.75rem, 4.5cqw, .9375rem);
+    line-height: 1.4;
+    text-align: left;
+  }
+  .receipt .line {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 3.4em;
+    gap: .6em;
+    align-items: baseline;
+    white-space: nowrap;
+  }
+  .receipt .ko { font-weight: 700; }
+  .receipt .ja { margin-left: .4em; font-size: .78em; }
+  .receipt .sub { text-align: right; }
+  .receipt .sum {
+    grid-template-columns: minmax(0, 1fr) auto;
+    margin-top: .2rem;
+    padding-top: .2rem;
+    border-top: 2px dashed var(--ink);
+    font-weight: 700;
+  }
   .reveal { min-height: 4.1rem; }
   .reveal .pair { font-family: var(--display); font-size: 1.25rem; font-weight: 700; line-height: 1.3; }
   .reveal .how { font-size: .9375rem; line-height: 1.45; }
@@ -342,6 +370,7 @@
   .scrap .word { font-family: var(--display); font-size: clamp(1.05rem, 5.6vw, 1.75rem); font-weight: 700; line-height: 1.2; white-space: nowrap; }
   .scrap .num { font-size: .875rem; font-weight: 700; line-height: 1.3; }
   .scraps.long .word { font-size: clamp(1rem, 4.6vw, 1.375rem); white-space: normal; word-break: keep-all; }
+  .scraps.long { grid-auto-rows: minmax(3.7rem, 1fr); }
   .scraps.long .num { font-size: .75rem; }
   .scrap.missed::after {
     content: "×";
@@ -352,8 +381,8 @@
     font-weight: 700;
     line-height: 1.5;
   }
-  .actions { grid-auto-rows: minmax(3.6rem, auto); }
-  .action { width: 100%; padding: .5rem 1rem; font-size: 1.0625rem; font-weight: 700; }
+  .actions { grid-auto-rows: minmax(3.25rem, auto); }
+  .action { width: 100%; padding: .4rem 1rem; font-size: 1.0625rem; font-weight: 700; }
 
   /* ── 横向き・広い画面：左に問題、右に操作 ── */
   @media (orientation: landscape) and (min-width: 34rem) {
@@ -432,7 +461,9 @@
     <div class="modes cloth">
       <button class="patch indigo mode wide-14" data-mode="read"><b>読み方</b><span>ハングルと数字を結ぶ</span></button>
       <button class="patch crimson mode wide-10" data-mode="listen"><b>聞き取り</b><span>音声で答える</span></button>
-      <button class="patch jade mode wide-24" data-mode="counter"><b>助数詞</b><span>개・명・잔・병 をつけて固有数詞で数える</span></button>
+      <button class="patch jade mode wide-10" data-mode="counter"><b>助数詞</b><span>〜個、〜人、〜杯</span></button>
+      <button class="patch gardenia mode wide-14" data-mode="konbini"><b>コンビニ</b><span>合計を言う、袋を頼む</span></button>
+      <button id="review-mode" class="patch plum mode wide-24" data-mode="review"><b>復習</b><span id="review-sub"></span></button>
       <p id="voice-note" class="patch gardenia note wide-24" hidden></p>
     </div>
   </section>
@@ -450,6 +481,7 @@
       <div id="stage" class="stage">
         <p id="glyph" class="glyph"></p>
         <p id="gloss" class="gloss" hidden></p>
+        <div id="receipt" class="receipt" hidden></div>
         <div id="listen" class="listen" hidden>
           <div class="listen-row">
             <button id="play" class="patch ramie listen-btn play">
@@ -480,7 +512,8 @@
     </div>
     <ul id="scraps" class="scraps cloth"></ul>
     <div class="actions cloth">
-      <button id="retry" class="patch ink action"></button>
+      <button id="review" class="patch gardenia action" hidden></button>
+      <button id="retry" class="patch ink action">もう一度</button>
       <button id="back" class="patch jade action">ホームに戻る</button>
     </div>
   </section>
@@ -561,6 +594,31 @@
     { id: 'water', ko: '물', ja: '水', c: '병' },
   ];
   const itemById = id => ITEMS.find(item => item.id === id);
+
+  // コンビニの商品。値段は練習用の目安
+  const GOODS = [
+    { id: 'kimbap', ko: '삼각김밥', ja: '三角おにぎり', price: 1200 },
+    { id: 'ramen', ko: '컵라면', ja: 'カップ麺', price: 1500 },
+    { id: 'banana', ko: '바나나우유', ja: 'バナナ牛乳', price: 1700 },
+    { id: 'water', ko: '생수', ja: '水', price: 1000 },
+    { id: 'coffee', ko: '커피', ja: 'コーヒー', price: 1800 },
+    { id: 'snack', ko: '과자', ja: 'お菓子', price: 2000 },
+    { id: 'choco', ko: '초콜릿', ja: 'チョコレート', price: 1400 },
+    { id: 'bento', ko: '도시락', ja: 'お弁当', price: 4500 },
+    { id: 'sandwich', ko: '샌드위치', ja: 'サンドイッチ', price: 2800 },
+  ];
+  const goodById = id => GOODS.find(good => good.id === id);
+
+  // レジで使う言い回し
+  const PHRASES = {
+    card: { ask: 'カードで払いたい', ko: '카드로 할게요', how: '카드 = カード、할게요 = 〜にします' },
+    cash: { ask: '現金で払いたい', ko: '현금으로 할게요', how: '현금 = 現金、할게요 = 〜にします' },
+    receipt: { ask: 'レシートがほしい', ko: '영수증 주세요', how: '영수증 = レシート、주세요 = ください' },
+    noBag: { ask: '袋はいらない', ko: '봉투는 괜찮아요', how: '봉투 = 袋、괜찮아요 = 結構です' },
+    total: { ask: '全部でいくらか聞きたい', ko: '전부 얼마예요?', how: '전부 = 全部、얼마 = いくら' },
+    heat: { ask: '温めてほしい', ko: '데워 주세요', how: '데우다 = 温める、주세요 = ください' },
+    chopsticks: { ask: 'お箸がほしい', ko: '젓가락 주세요', how: '젓가락 = お箸、주세요 = ください' },
+  };
 
   // 字面や響きが似ていて取り違えやすい組み合わせ
   const LOOK_NATIVE = {
@@ -804,7 +862,74 @@
     return { ...base, prompt: '日付の言い方は？', show: { text: ja, lang: 'ja' }, choices: choiceSet(word, wrongForms, 'ko') };
   }
 
-  const BUILDERS = { num: buildNumber, cnt: buildCounter, price: buildPrice, date: buildDate };
+  function buildTotal({ cart }) {
+    const lines = cart.map(([id, qty]) => ({ good: goodById(id), qty }));
+    const total = lines.reduce((sum, { good, qty }) => sum + good.price * qty, 0);
+    const word = priceWord(total);
+    const ja = `${fmt(total)}ウォン`;
+    const oneMissed = pickOne(lines.map(({ good, qty }) => total - good.price * qty)); // 1品足し忘れた金額
+    return {
+      key: `total:${cart.map(line => line.join('*')).join(',')}`,
+      word,
+      note: ja,
+      say: `전부 ${word}입니다`,
+      pair: `${ja} = ${word}`,
+      how: { text: `店員さんは 전부 ${word}입니다 と言います` },
+      prompt: '合計を韓国語で言うと？',
+      receipt: { lines, total },
+      choices: choiceSet(word, shuffle([oneMissed, ...closePrices(total).slice(0, 4)]).map(priceWord), 'ko'),
+    };
+  }
+
+  // 「봉투 두 개 주세요」の形。数の間違いをいくつか混ぜる
+  function buildAsk(key, koName, n, askText, how) {
+    const say = word => `${koName} ${word} 개 주세요`;
+    const word = say(nativeBeforeUnit(n));
+    return {
+      key,
+      word,
+      note: askText,
+      say: word,
+      pair: word,
+      how: { text: how },
+      prompt: 'レジで何と言う？',
+      show: { text: askText, lang: 'ja' },
+      choices: choiceSet(word, [
+        say(nativeWord(n)),
+        say(sinoWord(n)),
+        ...wrongNumbers('native', n).map(x => say(nativeBeforeUnit(x))),
+      ], 'ko'),
+    };
+  }
+
+  const buildBag = ({ n }) =>
+    buildAsk(`bag:${n}`, '봉투', n, `袋を${n}枚ください`, '봉투 = 袋、주세요 = ください');
+
+  function buildBuy({ good: id, n }) {
+    const good = goodById(id);
+    return buildAsk(`buy:${id}:${n}`, good.ko, n, `${good.ja}を${n}個ください`, `${good.ko} = ${good.ja}、주세요 = ください`);
+  }
+
+  function buildPhrase({ id }) {
+    const phrase = PHRASES[id];
+    const others = Object.values(PHRASES).filter(other => other !== phrase).map(other => other.ko);
+    return {
+      key: `phrase:${id}`,
+      word: phrase.ko,
+      note: phrase.ask,
+      say: phrase.ko,
+      pair: phrase.ko,
+      how: { text: phrase.how },
+      prompt: 'レジで何と言う？',
+      show: { text: phrase.ask, lang: 'ja' },
+      choices: choiceSet(phrase.ko, shuffle(others), 'ko'),
+    };
+  }
+
+  const BUILDERS = {
+    num: buildNumber, cnt: buildCounter, price: buildPrice, date: buildDate,
+    total: buildTotal, bag: buildBag, buy: buildBuy, phrase: buildPhrase,
+  };
 
   function build(spec) {
     const q = BUILDERS[spec.t](spec);
@@ -870,7 +995,27 @@
     }));
   }
 
+  function pickCart() {
+    return sample(GOODS, pickOne([2, 2, 3])).map(good => [good.id, pickOne([1, 1, 2, 3])]);
+  }
+
+  // 3回の買い物：注文 → 合計 → 袋 → 支払い の流れで、回ごとに少し変える
+  function konbiniSpecs() {
+    const carts = [pickCart(), pickCart(), pickCart()];
+    const bags = shuffle([{ t: 'bag', n: 1 }, { t: 'bag', n: 2 }, { t: 'bag', n: 3 }, { t: 'phrase', id: 'noBag' }]);
+    const closing = sample(['card', 'cash', 'receipt', 'chopsticks', 'total', 'heat'], 3).map(id => ({ t: 'phrase', id }));
+    const order = cart => ({ t: 'buy', good: cart[0][0], n: cart[0][1] });
+    const total = cart => ({ t: 'total', cart });
+    return [
+      order(carts[0]), total(carts[0]), closing[0],
+      total(carts[1]), bags[0], closing[1],
+      order(carts[2]), total(carts[2]), bags[1], closing[2],
+    ];
+  }
+
   function roundSpecs(mode, sys, level) {
+    if (mode === 'review') return reviewSpecs();
+    if (mode === 'konbini') return konbiniSpecs();
     if (mode === 'counter') return counterSpecs(level);
     const specs = sys === 'mix'
       ? sceneSpecs(level)
@@ -922,7 +1067,53 @@
     return { speak, stop, refresh, supported: Boolean(synth), hasVoice: () => Boolean(voice) };
   })();
 
-  /* ━━ 7. 画面 ━━ */
+  /* ━━ 7. 保存（localStorage） ━━
+     ブラウザの中の小さな保存場所。使えない環境でも、その場では普通に遊べるようにする。 */
+
+  const STORE_KEY = 'korean-number-quiz';
+
+  const store = (() => {
+    let data = { review: {}, sys: 'native', level: 1 };
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORE_KEY));
+      if (saved && typeof saved === 'object' && !Array.isArray(saved)) data = { ...data, ...saved };
+    } catch { /* 読めないときは最初の状態で始める */ }
+    if (!data.review || typeof data.review !== 'object') data.review = {};
+    return {
+      data,
+      save() {
+        try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch { /* 保存できなくても続ける */ }
+      },
+    };
+  })();
+
+  function canBuild(spec) {
+    try {
+      return !/undefined|NaN/.test(build(spec).word);
+    } catch {
+      return false;
+    }
+  }
+
+  function cleanReview() {
+    for (const [key, entry] of Object.entries(store.data.review)) {
+      if (!entry || !canBuild(entry.spec)) delete store.data.review[key];
+    }
+  }
+
+  function addMistake(q) {
+    const before = store.data.review[q.key];
+    store.data.review[q.key] = { spec: q.spec, misses: (before ? before.misses : 0) + 1, at: Date.now() };
+  }
+
+  const reviewCount = () => Object.keys(store.data.review).length;
+
+  function reviewSpecs() {
+    const newest = Object.values(store.data.review).sort((a, b) => b.at - a.at).slice(0, ROUND_SIZE);
+    return shuffle(newest.map(entry => entry.spec));
+  }
+
+  /* ━━ 8. 画面 ━━ */
 
   const SYSTEMS = {
     native: {
@@ -952,10 +1143,12 @@
     counter: $('counter'), track: $('track'), prompt: $('prompt'), stage: $('stage'),
     glyph: $('glyph'), gloss: $('gloss'), reveal: $('reveal'), next: $('next'), say: $('say'),
     listen: $('listen'), play: $('play'), listenNote: $('listen-note'), voiceNote: $('voice-note'),
+    receipt: $('receipt'),
   };
 
-  let sys = 'native';
-  let level = 1;
+  cleanReview();
+  let sys = SYSTEMS[store.data.sys] ? store.data.sys : 'native';
+  let level = [1, 2, 3].includes(store.data.level) ? store.data.level : 1;
   let round = null;
 
   function show(name) {
@@ -992,6 +1185,25 @@
       button.setAttribute('aria-pressed', String(i + 1 === level));
       button.replaceChildren(make('b', '', `Lv.${i + 1} ${title}`), make('span', '', sub, /[가-힣]/.test(sub) ? 'ko' : undefined));
     });
+  }
+
+  function renderReview() {
+    const count = reviewCount();
+    $('review-mode').disabled = count === 0;
+    $('review-sub').textContent = count ? `間違えた${count}問を解き直す` : '間違えた問題がここにたまります';
+  }
+
+  function renderReceipt({ lines, total }, answered) {
+    const rows = lines.map(({ good, qty }) => {
+      const row = make('p', 'line');
+      const name = make('span', 'name');
+      name.append(make('span', 'ko', good.ko, 'ko'), make('span', 'ja', good.ja));
+      row.append(name, make('span', 'qty', `${fmt(good.price)} × ${qty}`), make('span', 'sub', fmt(good.price * qty)));
+      return row;
+    });
+    const sum = make('p', 'line sum');
+    sum.append(make('span', 'name', '合計'), make('span', 'sub', answered ? `${fmt(total)}ウォン` : '？'));
+    el.receipt.replaceChildren(...rows, sum);
   }
 
   function voiceHelp() {
@@ -1064,6 +1276,8 @@
     el.gloss.textContent = q.gloss || '';
     if (q.show) setGlyph(q.show.text, q.show.lang);
     else el.glyph.hidden = true;
+    el.receipt.hidden = !q.receipt;
+    if (q.receipt) renderReceipt(q.receipt, false);
 
     screens.quiz.dataset.shape = q.choices.some(c => textWidth(c.text) > 4.2) ? 'wide' : 'short';
     options.forEach((button, i) => {
@@ -1087,6 +1301,10 @@
     const correct = q.choices[i].right;
     round.results.push({ q, correct });
 
+    if (!correct) addMistake(q);
+    else if (round.mode === 'review') delete store.data.review[q.key];
+    store.save();
+
     options.forEach((button, j) => {
       button.disabled = true;
       button.dataset.state = q.choices[j].right ? 'correct' : j === i ? 'wrong' : 'rest';
@@ -1099,6 +1317,7 @@
     el.gloss.hidden = true;
     if (q.listen) { el.stage.classList.remove('listening'); setGlyph(q.word, 'ko'); }
     if (q.show && q.show.text.includes('□')) setGlyph(q.word, 'ko');
+    if (q.receipt) renderReceipt(q.receipt, true);
     el.reveal.replaceChildren(make('p', 'pair', q.pair), make('p', 'how', q.how.text, q.how.lang));
     el.say.hidden = false;
 
@@ -1127,9 +1346,13 @@
 
     $('score').textContent = `${right} / ${results.length}`;
     $('score').setAttribute('aria-label', `${results.length}問中${right}問正解`);
-    $('score-note').textContent = wrong.length
-      ? '白い布が間違えた問題です。'
-      : '全問正解です。布がすべて染まりました。';
+    const remaining = reviewCount();
+    const isReview = mode === 'review';
+    $('score-note').textContent = isReview
+      ? (remaining ? `あと${remaining}問残っています。正解した問題は復習リストから消えました。` : '復習リストが空になりました。')
+      : wrong.length
+        ? '白い布が間違えた問題です。間違えた問題は復習リストに保存しました。'
+        : '全問正解です。布がすべて染まりました。';
 
     const long = results.some(r => textWidth(r.q.word) > 5);
     const spans = long ? results.map(() => 12) : clothSpans(results.length);
@@ -1142,25 +1365,33 @@
       return scrap;
     }));
 
+    const review = $('review');
+    review.hidden = remaining === 0;
+    review.textContent = `${isReview ? '続けて復習する' : '間違えた問題を復習する'}（${Math.min(remaining, ROUND_SIZE)}問）`;
+    review.onclick = () => startRound(reviewSpecs(), 'review');
+
     const retry = $('retry');
-    retry.textContent = wrong.length ? `間違えた${wrong.length}問をやり直す` : 'もう一度';
-    retry.onclick = () => startRound(wrong.length ? shuffle(wrong) : roundSpecs(mode, round.sys, round.level), mode);
+    retry.hidden = isReview;
+    retry.onclick = () => startRound(roundSpecs(mode, round.sys, round.level), mode);
 
     show('result');
-    retry.focus({ preventScroll: true });
+    (remaining ? review : isReview ? $('back') : retry).focus({ preventScroll: true });
   }
 
   function goHome() {
     speech.stop();
     round = null;
+    renderReview();
     show('start');
   }
 
-  /* ━━ 8. 操作 ━━ */
+  /* ━━ 9. 操作 ━━ */
 
   document.querySelectorAll('#sys [data-sys]').forEach(button => {
     button.addEventListener('click', () => {
       sys = button.dataset.sys;
+      store.data.sys = sys;
+      store.save();
       renderHero();
       renderPickers();
     });
@@ -1168,6 +1399,8 @@
   document.querySelectorAll('[data-level]').forEach(button => {
     button.addEventListener('click', () => {
       level = Number(button.dataset.level);
+      store.data.level = level;
+      store.save();
       renderPickers();
     });
   });
@@ -1205,6 +1438,7 @@
 
   renderHero();
   renderPickers();
+  renderReview();
   // 音声の一覧は遅れて届くことがあるので、少し待ってから案内を判断する
   setTimeout(updateVoiceNote, 1500);
   if (speech.supported && window.speechSynthesis.addEventListener) {
@@ -1214,9 +1448,10 @@
   // 自動テスト用の入口。テストのときだけ外から渡される
   if (window.__QUIZ_HOOK__) {
     window.__QUIZ_HOOK__({
-      build, roundSpecs, ITEMS, ROUND_BIG, DAYS_IN_MONTH, range,
+      build, roundSpecs, store, ITEMS, GOODS, PHRASES, ROUND_BIG, DAYS_IN_MONTH, range,
       playSpec: spec => startRound([spec], 'read'),
       rightIndex: () => round.q.choices.findIndex(c => c.right),
+      currentKey: () => round.q.key,
     });
   }
 })();
