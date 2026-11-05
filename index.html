@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1c2f6e">
+<title>固有数詞クイズ</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23171a2e'/%3E%3Crect width='19' height='15' fill='%231c2f6e'/%3E%3Crect x='20' width='12' height='15' fill='%23b3203f'/%3E%3Crect y='16' width='12' height='16' fill='%23f2bc2f'/%3E%3Crect x='13' y='16' width='19' height='16' fill='%23a6d8c6'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
+<style>
+  :root {
+    /* 조각보の染料 */
+    --indigo: #1c2f6e;   /* 쪽 */
+    --crimson: #b3203f;  /* 홍 */
+    --gardenia: #f2bc2f; /* 치자 */
+    --jade: #a6d8c6;     /* 옥 */
+    --plum: #4f2a6e;     /* 자 */
+    --ramie: #efede3;    /* 모시（染める前の布） */
+    --ink: #171a2e;      /* 먹 */
+    --ink-soft: #565a6e;
+
+    --seam: 4px;
+    --display: "Hahmlet", "Zen Kaku Gothic New", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    --ui: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", "Malgun Gothic", sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--ink);
+    font-family: var(--ui);
+    font-weight: 500;
+    line-height: 1.6;
+  }
+  [lang="ko"] { font-family: var(--display); }
+  h1, h2, p, ul { margin: 0; padding: 0; }
+  p { word-break: auto-phrase; }
+  ul { list-style: none; }
+  button {
+    appearance: none;
+    border: 0;
+    border-radius: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  :focus-visible { outline: 3px solid currentColor; outline-offset: -8px; }
+
+  /* 布：すき間が縫い目になる */
+  .cloth {
+    display: grid;
+    gap: var(--seam);
+    background:
+      repeating-linear-gradient(135deg, rgba(239, 237, 227, .8) 0 2px, transparent 2px 7px),
+      var(--ink);
+  }
+  .patch {
+    position: relative;
+    color: var(--on-dye);
+    background-color: var(--dye);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, .04) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(0, 0, 0, .04) 0 1px, transparent 1px 3px);
+    transition: background-color .22s ease, color .22s ease;
+  }
+  .indigo   { --dye: var(--indigo);   --on-dye: var(--ramie); }
+  .crimson  { --dye: var(--crimson);  --on-dye: #fff; }
+  .gardenia { --dye: var(--gardenia); --on-dye: var(--ink); }
+  .jade     { --dye: var(--jade);     --on-dye: var(--ink); }
+  .plum     { --dye: var(--plum);     --on-dye: var(--ramie); }
+  .ramie    { --dye: var(--ramie);    --on-dye: var(--ink); }
+  .ink      { --dye: var(--ink);      --on-dye: var(--ramie); }
+
+  /* ── 開始画面 ── */
+  .start {
+    min-height: 100vh;
+    min-height: 100dvh;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 1fr auto;
+  }
+  .hero {
+    container-type: inline-size;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-rows: auto auto;
+  }
+  .count-word {
+    display: flex;
+    align-items: flex-end;
+    padding: 2rem 4cqw 3cqw;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 26vw;
+    font-size: min(27cqw, 30dvh);
+    line-height: 1;
+    overflow: hidden; /* 書体の広い行ボックスで縦スクロールが出ないように */
+    animation: dye-in .5s ease backwards;
+  }
+  .count-word:nth-child(1) { grid-column: span 5; animation-delay: .15s; }
+  .count-word:nth-child(2) { grid-column: span 3; animation-delay: .5s; }
+  .count-word:nth-child(3) { grid-column: span 3; animation-delay: .85s; }
+  .count-word .digit {
+    position: absolute;
+    top: .55rem;
+    left: 4cqw;
+    font-family: var(--ui);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+  @keyframes dye-in {
+    from { background-color: var(--ramie); color: var(--ramie); }
+  }
+  .intro {
+    grid-column: span 5;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: .9rem 1rem;
+  }
+  .intro h1 { font-size: 1.4rem; font-weight: 700; line-height: 1.35; }
+  .intro p { margin-top: .3rem; font-size: .875rem; }
+
+  .menu { grid-template-columns: minmax(0, 1fr); grid-auto-rows: auto; }
+  .level {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+    min-height: 4.5rem;
+    padding: .5rem 1.1rem;
+    text-align: left;
+  }
+  .level b { font-family: var(--display); font-size: clamp(1.375rem, 7vw, 1.75rem); font-weight: 700; line-height: 1.1; white-space: nowrap; }
+  .level span { font-size: .95rem; font-weight: 700; white-space: nowrap; }
+  .note { padding: .7rem 1.1rem; font-size: .8125rem; }
+
+  /* ── 問題画面 ── */
+  .quiz {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 29rem;
+    grid-template-columns: repeat(24, minmax(0, 1fr));
+    grid-template-rows:
+      3.25rem
+      minmax(0, 1fr)
+      clamp(5.25rem, 15dvh, 8rem)
+      clamp(5.25rem, 15dvh, 8rem)
+      3.75rem;
+  }
+  .counter {
+    grid-column: span 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .track {
+    grid-column: span 15;
+    display: flex;
+    gap: 2px;
+    padding: 10px 8px;
+    background: var(--ink);
+  }
+  .bit {
+    position: relative;
+    flex-basis: 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(239, 237, 227, .16);
+    color: var(--ink);
+    font-size: .75rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: background-color .22s ease;
+  }
+  .bit[data-state="now"] { box-shadow: inset 0 0 0 2px var(--ramie); }
+  .bit[data-state="done"] { background: var(--dye); }
+  .bit[data-state="miss"] { background: var(--ramie); }
+  .bit[data-state="miss"]::after { content: "×"; }
+  .quit { grid-column: span 4; font-size: .8125rem; font-weight: 700; padding: 0; }
+
+  .question {
+    grid-column: 1 / -1;
+    container-type: size;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    padding: .8rem 1rem .7rem;
+    text-align: center;
+  }
+  .prompt { font-size: 1rem; font-weight: 700; }
+  .prompt.verdict { font-size: 1.375rem; line-height: 1.16; }
+  .glyph {
+    align-self: center;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: min(calc(88cqw / var(--len, 1)), 50cqh);
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .reveal { min-height: 4.1rem; }
+  .reveal .pair { font-family: var(--display); font-size: 1.5rem; font-weight: 700; line-height: 1.3; }
+  .reveal .how { font-size: 1rem; line-height: 1.5; }
+
+  .option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: .25rem .5rem;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(1.6rem, 8.5vw, 3rem);
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+  .opt-a, .opt-d { grid-column: span 14; }
+  .opt-b, .opt-c { grid-column: span 10; }
+  .option::after {
+    position: absolute;
+    top: .2rem;
+    right: .4rem;
+    font-family: var(--ui);
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .option:disabled { cursor: default; }
+  .option[data-state="correct"]::after { content: "○"; }
+  .option[data-state="wrong"]::after { content: "×"; }
+  .option[data-state="wrong"] { --dye: var(--ramie); --on-dye: var(--ink); }
+  .option[data-state="rest"] { --dye: var(--ramie); --on-dye: var(--ink-soft); }
+
+  .next {
+    grid-column: 1 / -1;
+    width: 100%;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: transparent;
+    cursor: default;
+  }
+  .next:enabled { --dye: var(--ink); --on-dye: var(--ramie); color: var(--ramie); cursor: pointer; }
+
+  /* ── 結果画面 ── */
+  .result {
+    min-height: 100vh;
+    min-height: 100dvh;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+  }
+  .score { padding: 1rem 1.1rem .9rem; }
+  .score h2 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(3.25rem, 17vw, 6rem);
+    line-height: 1.05;
+  }
+  .score p { margin-top: .2rem; font-size: .9375rem; }
+  .scraps {
+    grid-template-columns: repeat(24, minmax(0, 1fr));
+    grid-auto-rows: minmax(4.6rem, 1fr);
+  }
+  .scrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    padding: .35rem .25rem;
+    text-align: center;
+  }
+  .scrap .word { font-family: var(--display); font-size: clamp(1.05rem, 5.6vw, 1.75rem); font-weight: 700; line-height: 1.2; white-space: nowrap; }
+  .scrap .num { font-size: .875rem; font-weight: 700; line-height: 1.3; }
+  .scrap.missed::after {
+    content: "×";
+    position: absolute;
+    top: .1rem;
+    right: .4rem;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+  .actions { grid-auto-rows: minmax(3.6rem, auto); }
+  .action { width: 100%; padding: .5rem 1rem; font-size: 1.0625rem; font-weight: 700; }
+
+  /* ── 横向き・広い画面：左に問題、右に操作 ── */
+  @media (orientation: landscape) and (min-width: 40rem) {
+    .start { grid-template-columns: minmax(0, 7fr) minmax(0, 6fr); grid-template-rows: minmax(0, 1fr); }
+    .menu { grid-auto-rows: 1fr; grid-template-rows: repeat(3, 1fr) auto; }
+    .level { min-height: 3.25rem; padding-inline: .8rem; gap: .5rem; }
+    .level b { font-size: clamp(1.25rem, 2.6vw, 1.75rem); }
+
+    .quiz {
+      min-height: 19rem;
+      grid-template-rows: 3rem minmax(0, 1fr) minmax(0, 1fr) 3.5rem;
+    }
+    .question { grid-column: 1 / span 11; grid-row: 2 / span 3; }
+    .opt-a { grid-column: 12 / span 7; grid-row: 2; }
+    .opt-b { grid-column: 19 / span 6; grid-row: 2; }
+    .opt-c { grid-column: 12 / span 6; grid-row: 3; }
+    .opt-d { grid-column: 18 / span 7; grid-row: 3; }
+    .next { grid-column: 12 / -1; grid-row: 4; }
+    .option { font-size: clamp(1.5rem, 3.6vw, 4rem); }
+
+    .result { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); grid-template-rows: 1fr auto; }
+    .score { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; justify-content: flex-end; }
+    .scraps { grid-column: 2; grid-row: 1 / span 2; }
+    .actions { grid-column: 1; grid-row: 2; }
+    .score h2 { font-size: clamp(3.25rem, 9vw, 8rem); }
+    .scrap .word { font-size: clamp(1.05rem, 2.6vw, 2.5rem); }
+  }
+
+  @media (hover: hover) {
+    .level:hover, .option:hover:enabled, .action:hover, .next:hover:enabled, .quit:hover { filter: brightness(1.1); }
+  }
+  button:active:enabled { filter: brightness(.92); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <section id="start" class="start cloth">
+    <div class="hero cloth">
+      <div class="patch indigo count-word"><span class="digit">1</span><span lang="ko">하나</span></div>
+      <div class="patch crimson count-word"><span class="digit">2</span><span lang="ko">둘</span></div>
+      <div class="patch gardenia count-word"><span class="digit">3</span><span lang="ko">셋</span></div>
+      <div class="patch ramie intro">
+        <h1>固有数詞クイズ</h1>
+        <p>数字からハングルを、ハングルから数字を4択で選びます。</p>
+      </div>
+    </div>
+    <div class="menu cloth">
+      <button class="patch jade level" data-level="basic"><b>1〜10</b><span lang="ko">하나, 둘, 셋…</span></button>
+      <button class="patch plum level" data-level="tens"><b>10, 20, 30…</b><span lang="ko">열, 스물, 서른…</span></button>
+      <button class="patch ink level" data-level="all"><b>1〜99</b><span>全部まぜる</span></button>
+      <p class="patch ramie note">固有数詞で数えるのは99まで。100からは漢数詞の<span lang="ko">백</span>を使います。</p>
+    </div>
+  </section>
+
+  <section id="quiz" class="quiz cloth" hidden>
+    <p id="counter" class="patch ink counter"></p>
+    <div id="track" class="track" aria-hidden="true"></div>
+    <button id="quit" class="patch ink quit">やめる</button>
+
+    <div class="patch indigo question">
+      <p id="prompt" class="prompt" aria-live="polite"></p>
+      <p id="glyph" class="glyph"></p>
+      <div id="reveal" class="reveal" aria-live="polite"></div>
+    </div>
+
+    <button class="patch crimson option opt-a"></button>
+    <button class="patch gardenia option opt-b"></button>
+    <button class="patch jade option opt-c"></button>
+    <button class="patch plum option opt-d"></button>
+
+    <button id="next" class="patch ramie next" disabled></button>
+  </section>
+
+  <section id="result" class="result cloth" hidden>
+    <div class="patch ramie score">
+      <h2 id="score"></h2>
+      <p id="score-note"></p>
+    </div>
+    <ul id="scraps" class="scraps cloth"></ul>
+    <div class="actions cloth">
+      <button id="retry" class="patch ink action"></button>
+      <button id="back" class="patch jade action">範囲を選び直す</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  const ROUND_SIZE = 10;
+  const ONES = ['', '하나', '둘', '셋', '넷', '다섯', '여섯', '일곱', '여덟', '아홉'];
+  const TENS = ['', '열', '스물', '서른', '마흔', '쉰', '예순', '일흔', '여든', '아흔'];
+  const READINGS = {
+    1: 'ハナ', 2: 'トゥル', 3: 'セッ', 4: 'ネッ', 5: 'タソッ',
+    6: 'ヨソッ', 7: 'イルゴプ', 8: 'ヨドル', 9: 'アホプ', 10: 'ヨル',
+    20: 'スムル', 30: 'ソルン', 40: 'マフン', 50: 'シュィン',
+    60: 'イェスン', 70: 'イルン', 80: 'ヨドゥン', 90: 'アフン',
+  };
+  // 字面や響きが似ていて取り違えやすい組み合わせ
+  const LOOKALIKE = {
+    1: [2], 2: [1, 3], 3: [4, 2], 4: [3, 5], 5: [6, 4], 6: [5, 8, 10], 7: [9, 8], 8: [6, 10], 9: [7, 8],
+    10: [6, 8, 20], 20: [10, 30], 30: [20, 80], 40: [70, 90], 50: [60, 40],
+    60: [50, 80], 70: [40, 90], 80: [30, 60, 90], 90: [40, 70, 80],
+  };
+  const DYES = ['crimson', 'gardenia', 'indigo', 'jade', 'plum', 'gardenia', 'crimson', 'jade', 'indigo', 'plum'];
+  const TRACK_WEIGHTS = [5, 3, 4, 6, 3, 5, 4, 3, 6, 4];
+  const CLOTH_ROWS = [[14, 10], [6, 10, 8], [10, 14], [8, 6, 10]];
+
+  const range = (from, to, step = 1) =>
+    Array.from({ length: Math.floor((to - from) / step) + 1 }, (_, i) => from + i * step);
+
+  const LEVELS = {
+    basic: range(1, 10),
+    tens: range(10, 90, 10),
+    all: range(1, 99),
+  };
+
+  const word = n => TENS[Math.floor(n / 10)] + ONES[n % 10];
+
+  function shuffle(list) {
+    const a = [...list];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function wrongChoices(n, pool) {
+    const ten = n - n % 10;
+    const one = n % 10;
+    const close = [];
+    const related = [];
+    if (ten && one) {
+      for (const x of LOOKALIKE[one]) if (x < 10) close.push(ten + x);
+      for (const x of LOOKALIKE[ten]) if (x >= 10 && x % 10 === 0) close.push(x + one);
+      related.push(...range(1, 9).map(x => ten + x), ...range(10, 90, 10).map(x => x + one));
+    } else {
+      close.push(...LOOKALIKE[n]);
+      related.push(...(one ? range(1, 9) : range(10, 90, 10)));
+    }
+    const wrong = [];
+    for (const tier of [shuffle(close).slice(0, 2), shuffle(related), shuffle(pool)]) {
+      for (const x of tier) {
+        if (wrong.length < 3 && x !== n && pool.includes(x) && !wrong.includes(x)) wrong.push(x);
+      }
+    }
+    return wrong;
+  }
+
+  const $ = id => document.getElementById(id);
+  const screens = { start: $('start'), quiz: $('quiz'), result: $('result') };
+  const options = [...document.querySelectorAll('.option')];
+  const el = { counter: $('counter'), track: $('track'), prompt: $('prompt'), glyph: $('glyph'), reveal: $('reveal'), next: $('next') };
+
+  function show(name) {
+    for (const [key, screen] of Object.entries(screens)) screen.hidden = key !== name;
+    window.scrollTo(0, 0);
+  }
+
+  function make(tag, className, text, lang) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    if (lang) node.lang = lang;
+    return node;
+  }
+
+  let round = null;
+
+  function startRound(numbers, pool) {
+    round = {
+      pool,
+      questions: numbers.map(n => ({
+        n,
+        askWord: Math.random() < .5,
+        choices: shuffle([n, ...wrongChoices(n, pool)]),
+      })),
+      index: 0,
+      results: [],
+      answered: false,
+    };
+    el.track.replaceChildren(...numbers.map((_, i) => {
+      const bit = make('span', `bit ${DYES[i % DYES.length]}`);
+      bit.style.flexGrow = TRACK_WEIGHTS[i % TRACK_WEIGHTS.length];
+      return bit;
+    }));
+    show('quiz');
+    showQuestion();
+  }
+
+  function showQuestion() {
+    const { questions, index } = round;
+    const q = questions[index];
+    round.answered = false;
+
+    el.counter.textContent = `${index + 1} / ${questions.length}`;
+    el.track.children[index].dataset.state = 'now';
+    el.prompt.textContent = q.askWord ? 'この韓国語はいくつ？' : 'この数を韓国語で言うと？';
+    el.prompt.classList.remove('verdict');
+
+    const text = q.askWord ? word(q.n) : String(q.n);
+    el.glyph.textContent = text;
+    el.glyph.lang = q.askWord ? 'ko' : 'ja';
+    el.glyph.style.setProperty('--len', q.askWord ? text.length * 1.02 : text.length * .62);
+    el.reveal.replaceChildren();
+
+    options.forEach((button, i) => {
+      const choice = q.choices[i];
+      button.textContent = q.askWord ? String(choice) : word(choice);
+      button.lang = q.askWord ? 'ja' : 'ko';
+      button.disabled = false;
+      delete button.dataset.state;
+    });
+    el.next.disabled = true;
+    el.next.textContent = '';
+    options[0].focus({ preventScroll: true });
+  }
+
+  function answer(i) {
+    if (round.answered) return;
+    round.answered = true;
+
+    const q = round.questions[round.index];
+    const correct = q.choices[i] === q.n;
+    round.results.push({ n: q.n, correct });
+
+    options.forEach((button, j) => {
+      button.disabled = true;
+      button.dataset.state = q.choices[j] === q.n ? 'correct' : j === i ? 'wrong' : 'rest';
+    });
+
+    const bit = el.track.children[round.index];
+    bit.dataset.state = correct ? 'done' : 'miss';
+
+    el.prompt.textContent = correct ? '○ 正解' : '× 不正解';
+    el.prompt.classList.add('verdict');
+    el.reveal.replaceChildren(
+      make('p', 'pair', `${q.n} = ${word(q.n)}`),
+      howToRead(q.n),
+    );
+
+    const last = round.index === round.questions.length - 1;
+    el.next.textContent = last ? '結果を見る' : '次の問題';
+    el.next.disabled = false;
+    el.next.focus({ preventScroll: true });
+  }
+
+  // 1語の数は読み方を、合成語は組み立てを見せる
+  function howToRead(n) {
+    const ten = n - n % 10;
+    const one = n % 10;
+    if (READINGS[n]) return make('p', 'how', READINGS[n]);
+    return make('p', 'how', `${word(ten)} ${ten} + ${word(one)} ${one}`, 'ko');
+  }
+
+  function clothSpans(count) {
+    const spans = [];
+    for (let left = count, i = 0; left > 0; i++) {
+      let row = CLOTH_ROWS[i % CLOTH_ROWS.length];
+      if (row.length > left) row = left === 1 ? [24] : CLOTH_ROWS[0];
+      spans.push(...row);
+      left -= row.length;
+    }
+    return spans;
+  }
+
+  function showResult() {
+    const { results, pool } = round;
+    const wrong = results.filter(r => !r.correct).map(r => r.n);
+    const score = results.length - wrong.length;
+
+    $('score').textContent = `${score} / ${results.length}`;
+    $('score').setAttribute('aria-label', `${results.length}問中${score}問正解`);
+    $('score-note').textContent = wrong.length
+      ? '白い布が間違えた数字です。'
+      : '全問正解です。布がすべて染まりました。';
+
+    const spans = clothSpans(results.length);
+    $('scraps').replaceChildren(...results.map((r, i) => {
+      const scrap = make('li', `patch scrap ${r.correct ? DYES[i % DYES.length] : 'ramie missed'}`);
+      scrap.style.gridColumn = `span ${spans[i]}`;
+      scrap.append(make('span', 'word', word(r.n), 'ko'), make('span', 'num', String(r.n)));
+      return scrap;
+    }));
+
+    const retry = $('retry');
+    retry.textContent = wrong.length ? `間違えた${wrong.length}問をやり直す` : '同じ範囲でもう一度';
+    retry.onclick = () => startRound(wrong.length ? shuffle(wrong) : shuffle(pool).slice(0, ROUND_SIZE), pool);
+
+    show('result');
+    retry.focus({ preventScroll: true });
+  }
+
+  document.querySelectorAll('.level').forEach(button => {
+    button.addEventListener('click', () => {
+      const pool = LEVELS[button.dataset.level];
+      startRound(shuffle(pool).slice(0, ROUND_SIZE), pool);
+    });
+  });
+  options.forEach((button, i) => button.addEventListener('click', () => answer(i)));
+  el.next.addEventListener('click', () => {
+    round.index += 1;
+    if (round.index < round.questions.length) showQuestion();
+    else showResult();
+  });
+  $('quit').addEventListener('click', () => show('start'));
+  $('back').addEventListener('click', () => show('start'));
+
+  // 1〜4キーでも答えられる
+  document.addEventListener('keydown', e => {
+    if (screens.quiz.hidden || round.answered || e.repeat) return;
+    const i = ['1', '2', '3', '4'].indexOf(e.key);
+    if (i >= 0) answer(i);
+  });
+})();
+</script>
+</body>
+</html>
