@@ -40,7 +40,7 @@
     line-height: 1.6;
   }
   [lang="ko"] { font-family: var(--display); }
-  h1, h2, p, ul { margin: 0; padding: 0; }
+  h1, h2, h3, p, ul { margin: 0; padding: 0; }
   p { word-break: auto-phrase; }
   ul { list-style: none; }
   main { height: 100%; }
@@ -146,7 +146,8 @@
 
   .modes {
     grid-template-columns: repeat(24, minmax(0, 1fr));
-    grid-auto-rows: minmax(5rem, 1fr);
+    grid-template-rows: repeat(3, minmax(4.4rem, 1fr));
+    grid-auto-rows: auto;
   }
   .mode {
     display: flex;
@@ -159,6 +160,18 @@
   .mode b { font-size: 1.25rem; font-weight: 700; line-height: 1.3; }
   .mode span { font-size: .8125rem; line-height: 1.4; }
   .mode:disabled { --dye: var(--ramie); --on-dye: var(--ink-soft); cursor: default; }
+  .seg:disabled { --on-dye: var(--ink-soft); cursor: default; }
+  .record-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .8rem;
+    min-height: 3rem;
+    padding: .3rem .8rem;
+    text-align: left;
+  }
+  .record-link b { font-size: 1rem; font-weight: 700; }
+  .record-link span { font-size: .8125rem; white-space: nowrap; }
   .wide-14 { grid-column: span 14; }
   .wide-10 { grid-column: span 10; }
   .wide-24 { grid-column: span 24; }
@@ -180,6 +193,8 @@
     grid-template-rows: 3.25rem minmax(0, 1fr) repeat(4, 3.1rem) 3.75rem;
   }
   .counter {
+    flex-direction: column;
+    line-height: 1.25;
     grid-column: span 5;
     display: flex;
     align-items: center;
@@ -213,6 +228,16 @@
   .bit[data-state="miss"] { background: var(--ramie); }
   .bit[data-state="miss"]::after { content: "×"; }
   .quit { grid-column: span 4; font-size: .8125rem; font-weight: 700; padding: 0; }
+  .combo { color: var(--gardenia); font-size: .6875rem; line-height: 1.2; }
+  .timer { grid-column: span 15; display: flex; padding: 10px 8px; background: var(--ink); }
+  .timer-bar {
+    display: block;
+    width: 100%;
+    background: var(--gardenia);
+    transform-origin: left;
+    transition: transform .2s linear, background-color .2s ease;
+  }
+  .timer-bar[data-low] { background: var(--crimson); }
 
   .question {
     grid-column: 1 / -1;
@@ -253,6 +278,7 @@
     align-items: baseline;
     white-space: nowrap;
   }
+  .receipt .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .receipt .ko { font-weight: 700; }
   .receipt .ja { margin-left: .4em; font-size: .78em; }
   .receipt .sub { text-align: right; }
@@ -325,6 +351,12 @@
     line-height: 1.2;
   }
   .option:disabled { cursor: default; }
+  .option[data-hit] { z-index: 1; animation: stamp .3s ease; }
+  @keyframes stamp {
+    0% { transform: scale(.95); }
+    50% { transform: scale(1.025); }
+    100% { transform: scale(1); }
+  }
   .option[data-state="correct"]::after { content: "○"; }
   .option[data-state="wrong"]::after { content: "×"; }
   .option[data-state="wrong"] { --dye: var(--ramie); --on-dye: var(--ink); }
@@ -344,7 +376,7 @@
   .result {
     min-height: 100%;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto auto 1fr auto;
   }
   .score { padding: 1rem 1.1rem .9rem; }
   .score h2 {
@@ -384,17 +416,66 @@
   .actions { grid-auto-rows: minmax(3.25rem, auto); }
   .action { width: 100%; padding: .4rem 1rem; font-size: 1.0625rem; font-weight: 700; }
 
+  .stats { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    padding: .4rem .7rem;
+    line-height: 1.3;
+  }
+  .stat .label { font-size: .75rem; font-weight: 700; white-space: nowrap; }
+  .stat .value { font-family: var(--display); font-size: 1.5rem; font-weight: 700; line-height: 1.25; white-space: nowrap; }
+  .stat .sub { font-size: .6875rem; }
+
+  /* ── 記録画面 ── */
+  .records { min-height: 100%; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto 1fr auto; }
+  .records-head { display: flex; align-items: center; justify-content: space-between; padding: .3rem .3rem .3rem 1rem; }
+  .records-head h2 { font-size: 1.375rem; font-weight: 700; }
+  .text-button { min-height: 2.75rem; padding: 0 .7rem; background: none; font-size: .9375rem; font-weight: 700; }
+  .lists { grid-template-columns: minmax(0, 1fr); }
+  .list-block { padding: .6rem 1rem .7rem; }
+  .list-block h3 { margin-bottom: .2rem; font-size: 1rem; font-weight: 700; }
+  .rows li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: .8rem;
+    align-items: baseline;
+    padding: .3rem 0;
+    border-top: 1px dashed var(--ink-soft);
+    font-size: .875rem;
+    line-height: 1.4;
+  }
+  .rows b { font-family: var(--display); font-weight: 700; white-space: nowrap; }
+  .rows small { display: block; color: var(--ink-soft); font-size: .75rem; }
+  .rows .empty { display: block; border-top: 0; color: var(--ink-soft); }
+  #erase[data-armed] { --dye: var(--crimson); --on-dye: #fff; }
+
+  /* 正解のときに舞う布の切れ端 */
+  .burst { position: fixed; inset: 0; z-index: 5; overflow: hidden; pointer-events: none; }
+  .fly {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--size);
+    height: var(--size);
+    margin: calc(var(--size) / -2);
+    background: var(--dye);
+  }
+  .fly.tri { clip-path: polygon(0 0, 100% 0, 0 100%); }
+
   /* ── 横向き・広い画面：左に問題、右に操作 ── */
   @media (orientation: landscape) and (min-width: 34rem) {
     .start {
       grid-template-columns: minmax(0, 7fr) minmax(0, 6fr);
-      grid-template-rows: auto auto auto auto minmax(0, 1fr);
+      grid-template-rows: minmax(auto, 1fr) auto auto auto auto;
     }
     .hero, .intro, .start > .picker, .sys-note { grid-column: 1; }
     .modes { grid-column: 2; grid-row: 1 / -1; }
     .voice-note { grid-column: 1; }
-    .count-word { font-size: min(11cqw, 15dvh); padding-top: 1.5rem; }
-    .hero[data-sys="mix"] .count-word { font-size: min(7cqw, 11dvh); }
+    .count-word { font-size: min(13cqw, 22dvh); padding-top: 1.5rem; }
+    .hero[data-sys="mix"] .count-word { font-size: min(8.5cqw, 14dvh); }
 
     .quiz {
       min-height: 19rem;
@@ -420,10 +501,12 @@
     .quiz[data-shape="wide"] .opt-d { grid-row: 5; }
     .quiz[data-shape="wide"] .next { grid-row: 6; }
 
-    .result { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); grid-template-rows: 1fr auto; }
+    .result { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); grid-template-rows: 1fr auto auto; }
+    .result .stats { grid-column: 1; grid-row: 2; }
+    .lists { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .score { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; justify-content: flex-end; }
-    .scraps { grid-column: 2; grid-row: 1 / span 2; }
-    .actions { grid-column: 1; grid-row: 2; }
+    .scraps { grid-column: 2; grid-row: 1 / span 3; }
+    .actions { grid-column: 1; grid-row: 3; }
     .score h2 { font-size: clamp(3.25rem, 9vw, 8rem); }
     .scrap .word { font-size: clamp(1.05rem, 2.6vw, 2.5rem); }
     .scraps.long .word { font-size: clamp(1rem, 1.9vw, 1.625rem); }
@@ -463,14 +546,17 @@
       <button class="patch crimson mode wide-10" data-mode="listen"><b>聞き取り</b><span>音声で答える</span></button>
       <button class="patch jade mode wide-10" data-mode="counter"><b>助数詞</b><span>〜個、〜人、〜杯</span></button>
       <button class="patch gardenia mode wide-14" data-mode="konbini"><b>コンビニ</b><span>合計を言う、袋を頼む</span></button>
-      <button id="review-mode" class="patch plum mode wide-24" data-mode="review"><b>復習</b><span id="review-sub"></span></button>
+      <button class="patch plum mode wide-14" data-mode="attack"><b>タイムアタック</b><span>60秒で何問解けるか</span></button>
+      <button id="review-mode" class="patch crimson mode wide-10" data-mode="review"><b>復習</b><span id="review-sub"></span></button>
+      <button id="records-open" class="patch ink record-link wide-24"><b>記録</b><span id="record-line"></span></button>
       <p id="voice-note" class="patch gardenia note wide-24" hidden></p>
     </div>
   </section>
 
   <section id="quiz" class="quiz cloth" hidden>
-    <p id="counter" class="patch ink counter"></p>
+    <p class="patch ink counter"><span id="counter"></span><span id="combo" class="combo" hidden></span></p>
     <div id="track" class="track" aria-hidden="true"></div>
+    <div id="timer" class="timer" aria-hidden="true" hidden><span id="timer-bar" class="timer-bar"></span></div>
     <button id="quit" class="patch ink quit">やめる</button>
 
     <div id="question" class="patch indigo question">
@@ -510,14 +596,35 @@
       <h2 id="score"></h2>
       <p id="score-note"></p>
     </div>
+    <div id="stats" class="stats cloth"></div>
     <ul id="scraps" class="scraps cloth"></ul>
-    <div class="actions cloth">
+    <div id="actions" class="actions cloth">
       <button id="review" class="patch gardenia action" hidden></button>
       <button id="retry" class="patch ink action">もう一度</button>
       <button id="back" class="patch jade action">ホームに戻る</button>
     </div>
   </section>
+
+  <section id="records" class="records cloth" hidden>
+    <div class="patch ramie records-head">
+      <h2>記録</h2>
+      <button id="records-back" class="text-button">ホームに戻る</button>
+    </div>
+    <div id="record-stats" class="stats cloth"></div>
+    <div class="lists cloth">
+      <div class="patch ramie list-block">
+        <h3>自己ベスト</h3>
+        <ul id="best-list" class="rows"></ul>
+      </div>
+      <div class="patch ramie list-block">
+        <h3>最近の10回</h3>
+        <ul id="history-list" class="rows"></ul>
+      </div>
+    </div>
+    <button id="erase" class="patch ramie action">記録をすべて消す</button>
+  </section>
 </main>
+<div id="burst" class="burst" aria-hidden="true"></div>
 
 <script>
 (() => {
@@ -696,7 +803,7 @@
     const near = LOOK_SINO[lead].filter(x => x < 10).map(x => n + (x - lead) * unit);
     if (second) near.push(...LOOK_SINO[second].filter(x => x < 10).map(x => n + (x - second) * nextUnit));
     near.push(n + unit, n - unit, n * 10, n + nextUnit);
-    return shuffle(near).filter(x => x > 0 && x !== n && x % 100 === 0 && x < 100000);
+    return shuffle([...new Set(near)]).filter(x => x > 0 && x !== n && x % 100 === 0 && x < 100000);
   }
 
   // 値段を固有数詞で言ってしまった形（実際には使わない言い方）
@@ -867,6 +974,7 @@
     const total = lines.reduce((sum, { good, qty }) => sum + good.price * qty, 0);
     const word = priceWord(total);
     const ja = `${fmt(total)}ウォン`;
+    const near = closePrices(total);
     const oneMissed = pickOne(lines.map(({ good, qty }) => total - good.price * qty)); // 1品足し忘れた金額
     return {
       key: `total:${cart.map(line => line.join('*')).join(',')}`,
@@ -877,7 +985,7 @@
       how: { text: `店員さんは 전부 ${word}입니다 と言います` },
       prompt: '合計を韓国語で言うと？',
       receipt: { lines, total },
-      choices: choiceSet(word, shuffle([oneMissed, ...closePrices(total).slice(0, 4)]).map(priceWord), 'ko'),
+      choices: choiceSet(word, [...shuffle([oneMissed, ...near.slice(0, 3)]), ...near].map(priceWord), 'ko'),
     };
   }
 
@@ -1054,7 +1162,12 @@
       const mine = fn => (...args) => { if (current === utterance && fn) fn(...args); };
       utterance.onstart = mine(() => { clearTimeout(watchdog); if (onStart) onStart(); });
       utterance.onend = mine(() => { clearTimeout(watchdog); if (onEnd) onEnd(); });
-      utterance.onerror = mine(() => { clearTimeout(watchdog); if (onFail) onFail(); });
+      utterance.onerror = mine(event => {
+        clearTimeout(watchdog);
+        const stopped = event.error === 'canceled' || event.error === 'interrupted'; // 再生し直しただけ
+        if (stopped && onEnd) onEnd();
+        if (!stopped && onFail) onFail();
+      });
       current = utterance;
       synth.speak(utterance);
       watchdog = setTimeout(mine(onFail), 3000); // 無音のまま止まる端末があるため
@@ -1071,20 +1184,69 @@
      ブラウザの中の小さな保存場所。使えない環境でも、その場では普通に遊べるようにする。 */
 
   const STORE_KEY = 'korean-number-quiz';
+  const HISTORY_SIZE = 30;
+  const PASS_SCORE = 8;        // 10問中これだけ正解すると次のレベルへ
+  const ATTACK_SECONDS = 60;
+  const MODE_NAME = {
+    read: '読み方', listen: '聞き取り', attack: 'タイムアタック',
+    counter: '助数詞', konbini: 'コンビニ', review: '復習',
+  };
+  const SYS_LABEL = { native: '固有数詞', sino: '漢数詞', mix: '場面ミックス' };
 
   const store = (() => {
-    let data = { review: {}, sys: 'native', level: 1 };
-    try {
-      const saved = JSON.parse(localStorage.getItem(STORE_KEY));
-      if (saved && typeof saved === 'object' && !Array.isArray(saved)) data = { ...data, ...saved };
-    } catch { /* 読めないときは最初の状態で始める */ }
-    if (!data.review || typeof data.review !== 'object') data.review = {};
-    return {
-      data,
+    const fresh = () => ({
+      review: {},
+      sys: 'native',
+      level: 1,
+      unlocked: { native: 1, sino: 1, mix: 1 },
+      best: {},
+      history: [],
+      streak: { days: 0, best: 0, last: '' },
+      totals: { answered: 0, correct: 0, bestCombo: 0 },
+    });
+    const isRecord = value => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+    const count = value => (Number.isFinite(value) && value >= 0 ? value : 0);
+    const isEntry = entry => isRecord(entry) && MODE_NAME[entry.mode] && SYS_LABEL[entry.sys] && [1, 2, 3].includes(entry.level)
+      && [entry.score, entry.at, entry.correct, entry.total].every(Number.isFinite);
+
+    // 保存データの形が想定と違う項目は捨てて、その項目だけ最初の状態に戻す
+    function read() {
+      const data = fresh();
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem(STORE_KEY)); } catch { /* 読めないときは最初の状態で始める */ }
+      if (!isRecord(saved)) return data;
+      data.sys = saved.sys;
+      data.level = saved.level;
+      if (isRecord(saved.review)) data.review = saved.review;
+      if (isRecord(saved.best)) {
+        data.best = Object.fromEntries(Object.entries(saved.best).filter(([, entry]) => isEntry(entry)));
+      }
+      if (Array.isArray(saved.history)) data.history = saved.history.filter(isEntry).slice(0, HISTORY_SIZE);
+      if (isRecord(saved.unlocked)) {
+        for (const key of Object.keys(data.unlocked)) {
+          if ([1, 2, 3].includes(saved.unlocked[key])) data.unlocked[key] = saved.unlocked[key];
+        }
+      }
+      if (isRecord(saved.streak)) {
+        data.streak = { days: count(saved.streak.days), best: count(saved.streak.best), last: String(saved.streak.last || '') };
+      }
+      if (isRecord(saved.totals)) {
+        for (const key of Object.keys(data.totals)) data.totals[key] = count(saved.totals[key]);
+      }
+      return data;
+    }
+
+    const self = {
+      data: read(),
       save() {
-        try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch { /* 保存できなくても続ける */ }
+        try { localStorage.setItem(STORE_KEY, JSON.stringify(self.data)); } catch { /* 保存できなくても続ける */ }
+      },
+      reset() {
+        self.data = fresh();
+        self.save();
       },
     };
+    return self;
   })();
 
   function canBuild(spec) {
@@ -1113,18 +1275,57 @@
     return shuffle(newest.map(entry => entry.spec));
   }
 
+  const dayKey = date => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+
+  function yesterdayKey() {
+    const date = new Date();
+    date.setDate(date.getDate() - 1);
+    return dayKey(date);
+  }
+
+  // ストリーク：1問でも答えた日が何日続いているか
+  function touchStreak() {
+    const { streak } = store.data;
+    const today = dayKey(new Date());
+    if (streak.last === today) return;
+    streak.days = streak.last === yesterdayKey() ? streak.days + 1 : 1;
+    streak.last = today;
+    streak.best = Math.max(streak.best, streak.days);
+  }
+
+  function currentStreak() {
+    const { days, last } = store.data.streak;
+    return last === dayKey(new Date()) || last === yesterdayKey() ? days : 0;
+  }
+
+  // 連続で正解するほど1問の点が増える（200点で頭打ち）
+  const pointsFor = combo => 100 + 10 * Math.min(combo - 1, 10);
+
+  function bestKey({ mode, sys, level }) {
+    if (mode === 'review') return null;
+    if (mode === 'konbini') return 'konbini';
+    if (mode === 'counter') return `counter:${level}`;
+    return `${mode}:${sys}:${level}`;
+  }
+
+  function roundLabel({ mode, sys, level }) {
+    if (mode === 'review' || mode === 'konbini') return MODE_NAME[mode];
+    if (mode === 'counter') return `${MODE_NAME.counter} Lv.${level}`;
+    return `${MODE_NAME[mode]} ${SYS_LABEL[sys]} Lv.${level}`;
+  }
+
   /* ━━ 8. 画面 ━━ */
 
   const SYSTEMS = {
     native: {
       note: '韓国語もともとの数え方で、日本語の「ひとつ、ふたつ」にあたります。物や人の数に使います。',
       hero: [['1', '하나'], ['2', '둘'], ['3', '셋']],
-      levels: [['1〜10', '하나〜열'], ['2桁', '열〜아흔아홉'], ['ミックス', '1〜99']],
+      levels: [['1〜10', '하나〜열'], ['2桁', '11〜99'], ['ミックス', '1〜99']],
     },
     sino: {
       note: '漢字から来た数え方で、日本語の「いち、に、さん」にあたります。値段や日付に使います。',
       hero: [['1', '일'], ['2', '이'], ['3', '삼']],
-      levels: [['1〜10', '일〜십'], ['2桁', '십일〜구십구'], ['ミックス', '百・千・万も']],
+      levels: [['1〜10', '일〜십'], ['2桁', '11〜99'], ['ミックス', '百・千・万も']],
     },
     mix: {
       note: '個数は固有数詞、値段と日付は漢数詞。場面に合う言い方を選びます。',
@@ -1137,18 +1338,19 @@
   const CLOTH_ROWS = [[14, 10], [6, 10, 8], [10, 14], [8, 6, 10]];
 
   const $ = id => document.getElementById(id);
-  const screens = { start: $('start'), quiz: $('quiz'), result: $('result') };
+  const screens = { start: $('start'), quiz: $('quiz'), result: $('result'), records: $('records') };
   const options = [...document.querySelectorAll('.option')];
+  const calmMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const el = {
     counter: $('counter'), track: $('track'), prompt: $('prompt'), stage: $('stage'),
     glyph: $('glyph'), gloss: $('gloss'), reveal: $('reveal'), next: $('next'), say: $('say'),
     listen: $('listen'), play: $('play'), listenNote: $('listen-note'), voiceNote: $('voice-note'),
-    receipt: $('receipt'),
+    receipt: $('receipt'), combo: $('combo'), timer: $('timer'), timerBar: $('timer-bar'), burst: $('burst'),
   };
 
   cleanReview();
   let sys = SYSTEMS[store.data.sys] ? store.data.sys : 'native';
-  let level = [1, 2, 3].includes(store.data.level) ? store.data.level : 1;
+  let level = [1, 2, 3].includes(store.data.level) ? Math.min(store.data.level, store.data.unlocked[sys]) : 1;
   let round = null;
 
   function show(name) {
@@ -1167,6 +1369,7 @@
   function renderHero() {
     const dyes = ['indigo', 'crimson', 'gardenia'];
     const hero = $('hero');
+    if (hero.dataset.sys === sys) return;
     hero.dataset.sys = sys;
     hero.replaceChildren(...SYSTEMS[sys].hero.map(([label, word], i) => {
       const patch = make('div', `patch ${dyes[i]} count-word`);
@@ -1180,17 +1383,78 @@
       button.setAttribute('aria-pressed', String(button.dataset.sys === sys));
     });
     $('sys-note').textContent = SYSTEMS[sys].note;
+    const unlocked = store.data.unlocked[sys];
     document.querySelectorAll('[data-level]').forEach((button, i) => {
+      const locked = i + 1 > unlocked;
       const [title, sub] = SYSTEMS[sys].levels[i];
+      button.disabled = locked;
       button.setAttribute('aria-pressed', String(i + 1 === level));
-      button.replaceChildren(make('b', '', `Lv.${i + 1} ${title}`), make('span', '', sub, /[가-힣]/.test(sub) ? 'ko' : undefined));
+      button.replaceChildren(
+        make('b', '', `Lv.${i + 1} ${title}`),
+        locked
+          ? make('span', '', `${PASS_SCORE}問正解で解放`)
+          : make('span', '', sub, /[가-힣]/.test(sub) ? 'ko' : undefined),
+      );
     });
   }
 
   function renderReview() {
     const count = reviewCount();
     $('review-mode').disabled = count === 0;
-    $('review-sub').textContent = count ? `間違えた${count}問を解き直す` : '間違えた問題がここにたまります';
+    $('review-sub').textContent = count ? `間違えた${count}問` : 'まだありません';
+  }
+
+  function renderHomeRecord() {
+    $('record-line').textContent = `ストリーク ${currentStreak()}日、最高 ${store.data.totals.bestCombo}コンボ`;
+  }
+
+  function renderHome() {
+    renderHero();
+    renderPickers();
+    renderReview();
+    renderHomeRecord();
+  }
+
+  function statPatch(label, value, sub, dye) {
+    const patch = make('div', `patch ${dye} stat`);
+    patch.append(make('span', 'label', label), make('span', 'value', value));
+    if (sub) patch.append(make('span', 'sub', sub));
+    return patch;
+  }
+
+  function recordRow(entry, withDate) {
+    const row = make('li');
+    const name = make('span', '', roundLabel(entry));
+    if (withDate) {
+      const when = new Date(entry.at);
+      const clock = `${when.getHours()}:${String(when.getMinutes()).padStart(2, '0')}`;
+      name.append(make('small', '', `${when.getMonth() + 1}/${when.getDate()} ${clock}、${entry.total}問中${entry.correct}問正解`));
+    }
+    row.append(name, make('b', '', `${fmt(entry.score)}点`));
+    return row;
+  }
+
+  function fillRows(list, rows, emptyText) {
+    list.replaceChildren(...(rows.length ? rows : [make('li', 'empty', emptyText)]));
+  }
+
+  function renderRecords() {
+    const { totals, streak, best, history } = store.data;
+    const rate = totals.answered ? Math.round(totals.correct / totals.answered * 100) : 0;
+    $('record-stats').replaceChildren(
+      statPatch('ストリーク', `${currentStreak()}日`, `連続で遊んだ日数、最長${streak.best}日`, 'gardenia'),
+      statPatch('正解数', `${fmt(totals.correct)}問`, `正答率${rate}%`, 'jade'),
+      statPatch('最高コンボ', String(totals.bestCombo), '続けて正解した数', 'crimson'),
+    );
+    const bests = Object.values(best).sort((a, b) => b.score - a.score);
+    fillRows($('best-list'), bests.map(entry => recordRow(entry, false)), 'まだ記録がありません。1回遊ぶとここに残ります。');
+    fillRows($('history-list'), history.slice(0, 10).map(entry => recordRow(entry, true)), 'まだ記録がありません。');
+  }
+
+  function disarmErase() {
+    const erase = $('erase');
+    delete erase.dataset.armed;
+    erase.textContent = '記録をすべて消す';
   }
 
   function renderReceipt({ lines, total }, answered) {
@@ -1219,15 +1483,75 @@
     el.voiceNote.textContent = speech.hasVoice() ? '' : voiceHelp();
   }
 
-  function startRound(specs, mode) {
-    round = { specs, mode, sys, level, index: 0, results: [], answered: false, q: null };
-    el.track.replaceChildren(...specs.map((_, i) => {
+  function stopTimers() {
+    if (!round) return;
+    clearInterval(round.ticker);
+    clearTimeout(round.autoNext);
+  }
+
+  function tick() {
+    const left = Math.max(0, round.deadline - performance.now());
+    el.counter.textContent = `${Math.ceil(left / 1000)}秒`;
+    el.timerBar.style.transform = `scaleX(${left / (ATTACK_SECONDS * 1000)})`;
+    el.timerBar.toggleAttribute('data-low', left < 10000);
+    if (left <= 0) showResult();
+  }
+
+  function startRound(specs, mode, roundSys = sys, roundLevel = level) {
+    stopTimers();
+    const timed = mode === 'attack';
+    round = {
+      specs, mode, timed, sys: roundSys, level: roundLevel,
+      index: 0, results: [], answered: false, q: null,
+      combo: 0, bestCombo: 0, score: 0, deadline: 0, ticker: 0, autoNext: 0,
+    };
+    el.track.hidden = timed;
+    el.timer.hidden = !timed;
+    el.track.replaceChildren(...(timed ? [] : specs).map((_, i) => {
       const bit = make('span', `bit ${DYES[i % DYES.length]}`);
       bit.style.flexGrow = TRACK_WEIGHTS[i % TRACK_WEIGHTS.length];
       return bit;
     }));
+    renderCombo();
     show('quiz');
     showQuestion();
+    if (timed) {
+      round.deadline = performance.now() + ATTACK_SECONDS * 1000;
+      tick();
+      round.ticker = setInterval(tick, 200);
+    }
+  }
+
+  function renderCombo() {
+    el.combo.hidden = round.combo < 2;
+    el.combo.textContent = `${round.combo}コンボ`;
+  }
+
+  // 正解した選択肢から、染め布の切れ端が舞う。コンボが続くほど数が増える
+  function celebrate(button, combo) {
+    if (calmMotion.matches || !button.animate) return;
+    const box = button.getBoundingClientRect();
+    const fromX = box.left + box.width / 2;
+    const fromY = box.top + box.height / 2;
+    const dyes = ['crimson', 'gardenia', 'jade', 'ramie', 'plum'];
+    for (let i = 0, count = Math.min(8 + combo * 2, 24); i < count; i++) {
+      const piece = make('i', `fly ${pickOne(dyes)}${Math.random() < .5 ? ' tri' : ''}`);
+      piece.style.setProperty('--size', `${8 + Math.random() * 12}px`);
+      el.burst.append(piece);
+      const angle = -Math.PI / 2 + (Math.random() - .5) * 1.8;
+      const reach = 70 + Math.random() * (110 + combo * 12);
+      const toX = fromX + Math.cos(angle) * reach;
+      const toY = fromY + Math.sin(angle) * reach;
+      const spin = (Math.random() - .5) * 540;
+      const duration = 600 + Math.random() * 250;
+      piece.animate([
+        { transform: `translate(${fromX}px, ${fromY}px) rotate(0deg)`, opacity: 1 },
+        { transform: `translate(${toX}px, ${toY}px) rotate(${spin}deg)`, opacity: 1, offset: .7 },
+        { transform: `translate(${toX}px, ${toY + 36}px) rotate(${spin * 1.2}deg)`, opacity: 0 },
+      ], { duration, easing: 'cubic-bezier(.2, .7, .3, 1)', fill: 'forwards' });
+      setTimeout(() => piece.remove(), duration + 50);
+    }
+    if (combo >= 2) el.combo.animate([{ transform: 'scale(1.5)' }, { transform: 'scale(1)' }], { duration: 220, easing: 'ease-out' });
   }
 
   // 全角1、半角0.62、空白0.35文字として、見出しの幅を見積もる
@@ -1262,12 +1586,15 @@
     round.q = q;
     round.answered = false;
 
-    el.counter.textContent = `${round.index + 1} / ${round.specs.length}`;
-    el.track.children[round.index].dataset.state = 'now';
+    if (!round.timed) {
+      el.counter.textContent = `${round.index + 1} / ${round.specs.length}`;
+      el.track.children[round.index].dataset.state = 'now';
+    }
     el.prompt.textContent = q.prompt;
     el.prompt.classList.remove('verdict');
     el.reveal.replaceChildren();
     el.say.hidden = true;
+    delete el.play.dataset.on;
 
     el.stage.classList.toggle('listening', q.listen);
     el.listen.hidden = !q.listen;
@@ -1286,6 +1613,7 @@
       button.lang = choice.lang;
       button.disabled = false;
       delete button.dataset.state;
+      delete button.dataset.hit;
     });
     el.next.disabled = true;
     el.next.textContent = '';
@@ -1301,6 +1629,15 @@
     const correct = q.choices[i].right;
     round.results.push({ q, correct });
 
+    round.combo = correct ? round.combo + 1 : 0;
+    round.bestCombo = Math.max(round.bestCombo, round.combo);
+    if (correct) round.score += pointsFor(round.combo);
+
+    const { totals } = store.data;
+    totals.answered += 1;
+    if (correct) totals.correct += 1;
+    totals.bestCombo = Math.max(totals.bestCombo, round.combo);
+    touchStreak();
     if (!correct) addMistake(q);
     else if (round.mode === 'review') delete store.data.review[q.key];
     store.save();
@@ -1309,10 +1646,15 @@
       button.disabled = true;
       button.dataset.state = q.choices[j].right ? 'correct' : j === i ? 'wrong' : 'rest';
     });
-    el.track.children[round.index].dataset.state = correct ? 'done' : 'miss';
+    if (!round.timed) el.track.children[round.index].dataset.state = correct ? 'done' : 'miss';
 
-    el.prompt.textContent = correct ? '○ 正解' : '× 不正解';
+    el.prompt.textContent = !correct ? '× 不正解' : round.combo >= 2 ? `○ 正解 ${round.combo}コンボ` : '○ 正解';
     el.prompt.classList.add('verdict');
+    renderCombo();
+    if (correct) {
+      options[i].dataset.hit = '';
+      celebrate(options[i], round.combo);
+    }
     el.listen.hidden = true;
     el.gloss.hidden = true;
     if (q.listen) { el.stage.classList.remove('listening'); setGlyph(q.word, 'ko'); }
@@ -1321,10 +1663,56 @@
     el.reveal.replaceChildren(make('p', 'pair', q.pair), make('p', 'how', q.how.text, q.how.lang));
     el.say.hidden = false;
 
-    const last = round.index === round.specs.length - 1;
+    const last = !round.timed && round.index === round.specs.length - 1;
     el.next.textContent = last ? '結果を見る' : '次の問題';
     el.next.disabled = false;
     el.next.focus({ preventScroll: true });
+    if (round.timed) round.autoNext = setTimeout(advance, correct ? 500 : 1400);
+  }
+
+  function advance() {
+    clearTimeout(round.autoNext);
+    speech.stop();
+    round.index += 1;
+    if (round.timed && round.index >= round.specs.length) {
+      round.specs.push(...roundSpecs('attack', round.sys, round.level));
+    }
+    if (round.index < round.specs.length) showQuestion();
+    else showResult();
+  }
+
+  // 1回分の結果を保存し、レベルの解放と自己ベストを判定する
+  function recordRound() {
+    const { mode, sys: roundSys, level: roundLevel, results, score, bestCombo } = round;
+    const key = bestKey(round);
+    const outcome = { best: 0, newBest: false, unlockedLevel: 0 };
+    if (results.length) {
+      const correct = results.filter(r => r.correct).length;
+      const entry = { at: Date.now(), mode, sys: roundSys, level: roundLevel, correct, total: results.length, score, combo: bestCombo };
+      store.data.history = [entry, ...store.data.history].slice(0, HISTORY_SIZE);
+
+      if (key) {
+        const before = store.data.best[key];
+        outcome.newBest = Boolean(before) && score > before.score;
+        if (!before || score > before.score) store.data.best[key] = entry;
+        outcome.best = store.data.best[key].score;
+      }
+
+      const { unlocked } = store.data;
+      const passed = (mode === 'read' || mode === 'listen') && results.length === ROUND_SIZE && correct >= PASS_SCORE;
+      if (passed && roundLevel === unlocked[roundSys] && roundLevel < 3) {
+        unlocked[roundSys] = roundLevel + 1;
+        outcome.unlockedLevel = roundLevel + 1;
+        if (roundSys === sys) {
+          level = roundLevel + 1;
+          store.data.level = level;
+        }
+      }
+      store.save();
+    } else if (key && store.data.best[key]) {
+      outcome.best = store.data.best[key].score;
+    }
+    return outcome;
   }
 
   function clothSpans(count) {
@@ -1339,26 +1727,41 @@
   }
 
   function showResult() {
+    stopTimers();
     speech.stop();
-    const { results, mode } = round;
+    const { results, mode, timed, score, bestCombo } = round;
+    const outcome = recordRound();
     const wrong = results.filter(r => !r.correct).map(r => r.q.spec);
     const right = results.length - wrong.length;
 
-    $('score').textContent = `${right} / ${results.length}`;
-    $('score').setAttribute('aria-label', `${results.length}問中${right}問正解`);
+    $('score').textContent = timed ? `${fmt(score)}点` : `${right} / ${results.length}`;
+    $('score').setAttribute('aria-label', timed ? `${fmt(score)}点、${right}問正解` : `${results.length}問中${right}問正解`);
     const remaining = reviewCount();
     const isReview = mode === 'review';
-    $('score-note').textContent = isReview
-      ? (remaining ? `あと${remaining}問残っています。正解した問題は復習リストから消えました。` : '復習リストが空になりました。')
-      : wrong.length
-        ? '白い布が間違えた問題です。間違えた問題は復習リストに保存しました。'
-        : '全問正解です。布がすべて染まりました。';
+    const notes = [];
+    if (isReview) notes.push(remaining ? `あと${remaining}問残っています。正解した問題は復習リストから消えました。` : '復習リストが空になりました。');
+    else if (timed) notes.push(`${ATTACK_SECONDS}秒で${right}問正解しました。`);
+    else if (wrong.length) notes.push('白い布が間違えた問題です。間違えた問題は復習リストに保存しました。');
+    else notes.push('全問正解です。布がすべて染まりました。');
+    if (outcome.newBest) notes.push('自己ベストを更新しました。');
+    if (outcome.unlockedLevel) notes.push(`Lv.${outcome.unlockedLevel} に進めるようになりました。`);
+    $('score-note').textContent = notes.join('');
 
-    const long = results.some(r => textWidth(r.q.word) > 5);
-    const spans = long ? results.map(() => 12) : clothSpans(results.length);
-    if (long && results.length % 2) spans[results.length - 1] = 24;
+    $('stats').replaceChildren(
+      statPatch('スコア', fmt(score), '', 'ink'),
+      statPatch('最大コンボ', String(bestCombo), '', 'ink'),
+      ...(isReview ? [] : [statPatch('自己ベスト', outcome.best ? fmt(outcome.best) : 'なし', '', 'ink')]),
+    );
+
+    // タイムアタックは問題数が多いので、間違えた問題を先にして12枚まで見せる
+    const shown = timed
+      ? [...results.filter(r => !r.correct), ...results.filter(r => r.correct)].slice(0, 12)
+      : results;
+    const long = shown.some(r => textWidth(r.q.word) > 5);
+    const spans = long ? shown.map(() => 12) : clothSpans(shown.length);
+    if (long && shown.length % 2) spans[shown.length - 1] = 24;
     $('scraps').classList.toggle('long', long);
-    $('scraps').replaceChildren(...results.map((r, i) => {
+    $('scraps').replaceChildren(...shown.map((r, i) => {
       const scrap = make('li', `patch scrap ${r.correct ? DYES[i % DYES.length] : 'ramie missed'}`);
       scrap.style.gridColumn = `span ${spans[i]}`;
       scrap.append(make('span', 'word', r.q.word, 'ko'), make('span', 'num', r.q.note));
@@ -1372,17 +1775,35 @@
 
     const retry = $('retry');
     retry.hidden = isReview;
-    retry.onclick = () => startRound(roundSpecs(mode, round.sys, round.level), mode);
+    retry.onclick = () => startRound(roundSpecs(mode, round.sys, round.level), mode, round.sys, round.level);
 
     show('result');
-    (remaining ? review : isReview ? $('back') : retry).focus({ preventScroll: true });
+    const firstButton = remaining ? review : isReview ? $('back') : retry;
+    if (timed) {
+      // 時間切れの瞬間に連打していても、結果画面のボタンを誤って押さないように
+      const actions = $('actions');
+      actions.inert = true;
+      setTimeout(() => {
+        actions.inert = false;
+        firstButton.focus({ preventScroll: true });
+      }, 800);
+    } else {
+      firstButton.focus({ preventScroll: true });
+    }
   }
 
   function goHome() {
+    stopTimers();
     speech.stop();
     round = null;
-    renderReview();
+    renderHome();
     show('start');
+  }
+
+  function openRecords() {
+    disarmErase();
+    renderRecords();
+    show('records');
   }
 
   /* ━━ 9. 操作 ━━ */
@@ -1390,7 +1811,9 @@
   document.querySelectorAll('#sys [data-sys]').forEach(button => {
     button.addEventListener('click', () => {
       sys = button.dataset.sys;
+      level = Math.min(level, store.data.unlocked[sys]);
       store.data.sys = sys;
+      store.data.level = level;
       store.save();
       renderHero();
       renderPickers();
@@ -1408,14 +1831,24 @@
     button.addEventListener('click', () => startRound(roundSpecs(button.dataset.mode, sys, level), button.dataset.mode));
   });
   options.forEach((button, i) => button.addEventListener('click', () => answer(i)));
-  el.next.addEventListener('click', () => {
-    speech.stop();
-    round.index += 1;
-    if (round.index < round.specs.length) showQuestion();
-    else showResult();
-  });
+  el.next.addEventListener('click', advance);
   $('quit').addEventListener('click', goHome);
   $('back').addEventListener('click', goHome);
+  $('records-open').addEventListener('click', openRecords);
+  $('records-back').addEventListener('click', goHome);
+  $('erase').addEventListener('click', () => {
+    const erase = $('erase');
+    if (erase.dataset.armed === undefined) {
+      erase.dataset.armed = '';
+      erase.textContent = 'もう一度押すと消します。元に戻せません';
+      return;
+    }
+    store.reset();
+    sys = 'native';
+    level = 1;
+    disarmErase();
+    renderRecords();
+  });
   el.play.addEventListener('click', () => playQuestion());
   $('slow').addEventListener('click', () => playQuestion(true));
   $('peek').addEventListener('click', () => setGlyph(round.q.word, 'ko'));
@@ -1436,9 +1869,7 @@
     if (i >= 0) answer(i);
   });
 
-  renderHero();
-  renderPickers();
-  renderReview();
+  renderHome();
   // 音声の一覧は遅れて届くことがあるので、少し待ってから案内を判断する
   setTimeout(updateVoiceNote, 1500);
   if (speech.supported && window.speechSynthesis.addEventListener) {
@@ -1452,6 +1883,7 @@
       playSpec: spec => startRound([spec], 'read'),
       rightIndex: () => round.q.choices.findIndex(c => c.right),
       currentKey: () => round.q.key,
+      currentRound: () => round,
     });
   }
 })();
