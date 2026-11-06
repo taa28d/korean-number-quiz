@@ -182,7 +182,7 @@
     color: var(--on-hero);
     border-radius: 16px;
   }
-  .start h1 { font-size: 1.25rem; font-weight: 700; line-height: 1.35; }
+  .start-head h1 { font-size: 1.25rem; font-weight: 700; line-height: 1.35; }
   .subtitle { font-size: .9375rem; font-weight: 700; line-height: 1.3; }
   .hero { display: flex; flex-wrap: wrap; gap: .25rem 1.5rem; }
   .hero-word { display: grid; }
@@ -282,6 +282,62 @@
   .back .icon { width: 1.25rem; height: 1.25rem; transform: rotate(180deg); }
   .lead { display: grid; gap: .375rem; }
   .lead h2 { font-size: 1.375rem; font-weight: 700; line-height: 1.3; text-wrap: balance; }
+  .secondary {
+    width: 100%;
+    min-height: 3rem;
+    padding: .5rem 1rem;
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius);
+    font-weight: 700;
+  }
+
+  /* 覚えるカード：押すと発音を聞ける */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr)); gap: .5rem; }
+  .cards.wide { grid-template-columns: minmax(0, 1fr); }
+  .card {
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: .125rem;
+    min-height: 4.75rem;
+    padding: .5rem .25rem;
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius);
+  }
+  .card .digit { color: var(--muted); font-size: .9375rem; line-height: 1.3; }
+  .card [lang="ko"] { font-family: var(--display); font-size: 1.5rem; line-height: 1.25; }
+  .card[data-on] { background: var(--accent-soft); border-color: var(--accent); }
+
+  /* ── 理解度テスト ── */
+  .test-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: var(--muted); font-size: .9375rem; font-weight: 700; }
+  .test-card {
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: .25rem;
+    min-height: 11rem;
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    text-align: center;
+  }
+  .test-word { font-family: var(--display); font-size: clamp(2rem, 10vw, 2.75rem); line-height: 1.2; white-space: nowrap; }
+  .choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+  .choices[data-wide] { grid-template-columns: minmax(0, 1fr); }
+  .choice {
+    min-width: 0;
+    min-height: 3.5rem;
+    padding: .25rem .5rem;
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius);
+    font-family: var(--display);
+    font-size: clamp(1.25rem, 5.6vw, 1.5rem);
+    line-height: 1.2;
+  }
 
   /* ── 問題画面 ── */
   .quiz {
@@ -635,7 +691,7 @@
 
   @media (hover: hover) {
     .mode:hover:enabled { background: var(--accent-soft); }
-    .option:hover:enabled, .action:hover { border-color: var(--accent); }
+    .option:hover:enabled, .action:hover, .choice:hover, .secondary:hover, .card:hover { border-color: var(--accent); }
     .next:hover, .listen-btn:hover, .primary:hover { filter: brightness(1.08); }
   }
   button:active:enabled { filter: brightness(.95); }
@@ -652,6 +708,71 @@
   <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
 </svg>
 <main>
+  <section id="welcome" class="lesson" hidden>
+    <header class="start-head">
+      <div>
+        <h1>韓国語 数詞クイズ</h1>
+        <p class="subtitle" lang="ko">한국어 숫자 퀴즈</p>
+      </div>
+      <div class="hero">
+        <div class="hero-word"><span class="digit">1</span><span lang="ko">하나</span></div>
+        <div class="hero-word"><span class="digit">2</span><span lang="ko">둘</span></div>
+        <div class="hero-word"><span class="digit">3</span><span lang="ko">셋</span></div>
+      </div>
+    </header>
+    <div class="lead">
+      <h2>はじめまして</h2>
+      <p class="note">今の力に合わせて、始める場所を決めます。</p>
+    </div>
+    <div class="modes">
+      <button id="first-time" class="mode">
+        <span class="mode-icon t-green" lang="ko">가</span>
+        <span class="mode-text"><b>韓国語は初めて</b><span class="mode-sub">Lv.1の最初の5つから始める</span></span>
+        <svg class="icon chevron"><use href="#i-chevron"/></svg>
+      </button>
+      <button id="take-test" class="mode">
+        <span class="mode-icon t-blue" lang="ko">나</span>
+        <span class="mode-text"><b>少し知っている</b><span class="mode-sub">テストで始める場所を決める</span></span>
+        <svg class="icon chevron"><use href="#i-chevron"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <section id="placement" class="lesson" hidden>
+    <div class="test-top">
+      <button id="test-quit" class="quit">やめる</button>
+      <span id="test-step"></span>
+    </div>
+    <div class="test-card">
+      <p id="test-prompt" class="note"></p>
+      <p id="test-word" class="test-word"></p>
+      <p id="test-gloss" class="gloss" hidden></p>
+    </div>
+    <div id="test-choices" class="choices">
+      <button class="choice"></button>
+      <button class="choice"></button>
+      <button class="choice"></button>
+      <button class="choice"></button>
+    </div>
+    <button id="test-skip" class="secondary">わからない</button>
+  </section>
+
+  <section id="placed" class="lesson" hidden>
+    <header class="start-head">
+      <div>
+        <h1>韓国語 数詞クイズ</h1>
+        <p class="subtitle" lang="ko">한국어 숫자 퀴즈</p>
+      </div>
+      <div id="placed-hero" class="hero"></div>
+    </header>
+    <div class="lead">
+      <h2 id="placed-title"></h2>
+      <p id="placed-note" class="note"></p>
+    </div>
+    <button id="placed-go" class="primary center"><b id="placed-name"></b></button>
+    <button id="placed-restart" class="secondary" hidden>Lv.1から始める</button>
+  </section>
+
   <section id="start" class="start">
     <header class="start-head">
       <div>
@@ -686,6 +807,11 @@
           <span class="mode-text"><b>記録</b><span id="record-line" class="mode-sub"></span></span>
           <svg class="icon chevron"><use href="#i-chevron"/></svg>
         </button>
+        <button id="test-again" class="mode">
+          <span class="mode-icon t-yellow" lang="ko">시</span>
+          <span class="mode-text"><b>理解度テスト</b><span class="mode-sub">始める場所を決め直す</span></span>
+          <svg class="icon chevron"><use href="#i-chevron"/></svg>
+        </button>
         <button id="sound-toggle" class="mode" aria-pressed="true">
           <span class="mode-icon t-green" lang="ko">소</span>
           <span class="mode-text"><b>効果音と読み上げ</b><span id="sound-sub" class="mode-sub"></span></span>
@@ -706,6 +832,11 @@
     <div class="lead">
       <h2 id="lesson-name"></h2>
       <p id="lesson-note" class="note"></p>
+    </div>
+    <div class="group">
+      <h3 class="heading">押すと発音を聞けます</h3>
+      <div id="cards" class="cards"></div>
+      <p id="card-note" class="note warn" hidden>音声を再生できませんでした。文字を見て覚えましょう。</p>
     </div>
     <button id="lesson-start" class="primary center"><b>練習を始める</b><span id="lesson-sub"></span></button>
   </section>
@@ -1344,7 +1475,7 @@
     },
     {
       level: 8, name: '99まで数える', sample: '스물, 서른',
-      note: '「ひとつ、ふたつ」の数え方で、11から99までを覚えます。20から90は、それぞれ別の言葉です。20の前で数えるときは스물が스무に変わります。',
+      note: '「ひとつ、ふたつ」の数え方で、11から99までを覚えます。20から90は、それぞれ別の言葉です。「20個」のように物を数えるときは、스물が스무になります。',
       cards: [...cardsOf([11], String, nativeWord), ...cardsOf(range(20, 90, 10), String, nativeWord)],
       specs: () => shuffle([
         ...halfListening(numberSpecs('native', [...sample(range(11, 19), 2), ...twoDigits(3, 2)])),
@@ -1447,7 +1578,8 @@
     const fresh = () => ({
       review: {},
       sound: true,
-      course: { cleared: 0 },   // cleared：合格したレベルの数。レベルは順に開く
+      // placed：始める場所を決めたか。cleared：合格したレベルの数（レベルは順に開く）
+      course: { placed: false, cleared: 0 },
       best: {},
       history: [],
       streak: { days: 0, best: 0, last: '' },
@@ -1473,7 +1605,8 @@
       }
       if (Array.isArray(saved.history)) data.history = saved.history.filter(isEntry).slice(0, HISTORY_SIZE);
       if (isRecord(saved.course)) {
-        const { cleared } = saved.course;
+        const { placed, cleared } = saved.course;
+        data.course.placed = placed === true;
         if (Number.isInteger(cleared) && cleared >= 0 && cleared <= LEVEL_COUNT) data.course.cleared = cleared;
       }
       if (isRecord(saved.streak)) {
@@ -1632,8 +1765,12 @@
   /* ━━ 9. 画面 ━━ */
 
   const $ = id => document.getElementById(id);
-  const screens = { start: $('start'), lesson: $('lesson'), quiz: $('quiz'), result: $('result'), records: $('records') };
+  const screens = {
+    welcome: $('welcome'), placement: $('placement'), placed: $('placed'),
+    start: $('start'), lesson: $('lesson'), quiz: $('quiz'), result: $('result'), records: $('records'),
+  };
   const options = [...document.querySelectorAll('.option')];
+  const testChoices = [...document.querySelectorAll('.choice')];
   const calmMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const el = {
     counter: $('counter'), track: $('track'), question: $('question'), prompt: $('prompt'), stage: $('stage'),
@@ -1662,9 +1799,7 @@
   // 語が長いレベルは、見出しの文字を小さくして折り返しを防ぐ
   const LONG_HERO = 5;
 
-  function renderHero() {
-    const hero = $('hero');
-    const lesson = nextLesson();
+  function renderHero(hero, lesson) {
     const words = lesson.hero || lesson.cards.slice(0, 3);
     hero.toggleAttribute('data-long', words.reduce((sum, [, word]) => sum + textWidth(word), 0) > LONG_HERO);
     hero.replaceChildren(...words.map(([label, word]) => {
@@ -1707,7 +1842,96 @@
     $('lesson-name').textContent = lessonTitle(lesson);
     $('lesson-note').textContent = lesson.note;
     $('lesson-sub').textContent = '読む問題と聞く問題で10問';
+    $('card-note').hidden = true;
+    $('cards').replaceChildren(...lesson.cards.map(([label, word]) => {
+      const card = make('button', 'card');
+      card.dataset.say = word;
+      card.append(make('span', 'digit', label), make('span', '', word, 'ko'));
+      return card;
+    }));
     show('lesson');
+  }
+
+  function sayCard(card) {
+    const stopGlow = () => delete card.dataset.on;
+    $('cards').querySelectorAll('[data-on]').forEach(other => delete other.dataset.on);
+    card.dataset.on = '';
+    speech.speak(card.dataset.say, {
+      onEnd: stopGlow,
+      onFail() {
+        stopGlow();
+        $('card-note').hidden = false;
+      },
+    });
+  }
+
+  /* 理解度テスト：易しいレベルから2問ずつ出し、2問とも正解なら次のレベルへ進む。
+     間違えるか「わからない」を押した時点で終わり、そのレベルから始める。正解は見せない。 */
+
+  const test = { level: 1, step: 0, specs: [], q: null };
+  const QUESTIONS_PER_TEST_LEVEL = 2;
+  const lessonOfLevel = level => LESSONS.find(lesson => lesson.level === level);
+  const testSpecs = level => sample(lessonOfLevel(level).specs().filter(spec => !spec.listen), QUESTIONS_PER_TEST_LEVEL);
+
+  function startTest() {
+    Object.assign(test, { level: 1, step: 0, specs: testSpecs(1) });
+    showTestQuestion();
+    show('placement');
+  }
+
+  function showTestQuestion() {
+    const q = build(test.specs[test.step]);
+    test.q = q;
+    $('test-step').textContent = `理解度テスト Lv.${test.level}`;
+    $('test-prompt').textContent = q.prompt;
+    $('test-word').textContent = q.show.text;
+    $('test-word').lang = q.show.lang;
+    $('test-gloss').textContent = q.gloss || '';
+    $('test-gloss').hidden = !q.gloss;
+    $('test-choices').toggleAttribute('data-wide', q.choices.some(choice => textWidth(choice.text) > 5.5));
+    testChoices.forEach((button, i) => {
+      button.textContent = q.choices[i].text;
+      button.lang = q.choices[i].lang;
+    });
+  }
+
+  function answerTest(correct) {
+    if (!correct) {
+      finishTest(test.level);
+      return;
+    }
+    test.step += 1;
+    if (test.step === QUESTIONS_PER_TEST_LEVEL) {
+      test.level += 1;
+      test.step = 0;
+      // Lv.10は使い分けの総合なので、Lv.9まで解ければそこから始める
+      if (test.level === LEVEL_COUNT) {
+        finishTest(LEVEL_COUNT);
+        return;
+      }
+      test.specs = testSpecs(test.level);
+    }
+    showTestQuestion();
+  }
+
+  function finishTest(start) {
+    const before = course().cleared;
+    const firstTime = !course().placed;
+    const lesson = lessonOfLevel(start);
+    course().placed = true;
+    course().cleared = Math.max(before, start - 1);
+    store.save();
+
+    const ahead = before >= start;
+    renderHero($('placed-hero'), lesson);
+    $('placed-title').textContent = ahead ? `Lv.${start} の力があります` : `Lv.${start} から始めましょう`;
+    $('placed-note').textContent = ahead
+      ? `今はLv.${nextLesson().level}まで進んでいます。進み具合はそのままです。`
+      : start === 1 ? '最初の5つから順に進めましょう。' : `Lv.${start - 1}までは合格にしました。あとから戻って練習できます。`;
+    $('placed-name').textContent = `${lessonTitle(lesson)}へ`;
+    $('placed-go').onclick = () => openLesson(lesson);
+    $('placed-restart').hidden = !firstTime || start === 1;
+    show('placed');
   }
 
   function renderReview() {
@@ -1726,7 +1950,7 @@
   }
 
   function renderHome() {
-    renderHero();
+    renderHero($('hero'), nextLesson());
     renderCourse();
     renderReview();
     renderHomeRecord();
@@ -2133,6 +2357,10 @@
     stopTimers();
     speech.stop();
     round = null;
+    if (!course().placed) {
+      show('welcome');
+      return;
+    }
     renderHome();
     show('start');
   }
@@ -2150,8 +2378,30 @@
     const row = event.target.closest('[data-lesson]');
     if (row) openLesson(lessonById(row.dataset.lesson));
   });
-  $('lesson-start').addEventListener('click', () => playLesson(openedLesson));
+  $('cards').addEventListener('click', event => {
+    const card = event.target.closest('[data-say]');
+    if (card) sayCard(card);
+  });
+  $('lesson-start').addEventListener('click', () => {
+    speech.stop();
+    playLesson(openedLesson);
+  });
   $('lesson-back').addEventListener('click', goHome);
+  $('first-time').addEventListener('click', () => {
+    course().placed = true;
+    store.save();
+    openLesson(lessonOfLevel(1));
+  });
+  $('take-test').addEventListener('click', startTest);
+  $('test-again').addEventListener('click', startTest);
+  $('test-quit').addEventListener('click', goHome);
+  $('test-skip').addEventListener('click', () => answerTest(false));
+  testChoices.forEach((button, i) => button.addEventListener('click', () => answerTest(test.q.choices[i].right)));
+  $('placed-restart').addEventListener('click', () => {
+    course().cleared = 0;
+    store.save();
+    openLesson(lessonOfLevel(1));
+  });
   $('review-mode').addEventListener('click', () => startRound(reviewSpecs(), 'review'));
   $('attack-mode').addEventListener('click', () => startRound(attackSpecs(), 'attack'));
   options.forEach((button, i) => button.addEventListener('click', () => answer(i)));
@@ -2211,7 +2461,7 @@
     if (i >= 0) answer(i);
   });
 
-  renderHome();
+  goHome();
   // 音声の一覧は遅れて届くことがあるので、少し待ってから案内を判断する
   setTimeout(updateVoiceNote, 1500);
   if (speech.supported && window.speechSynthesis.addEventListener) {
@@ -2265,6 +2515,8 @@
       playSpecs: specs => startRound(specs, 'attempt'),
       goHome,
       playLesson: id => playLesson(lessonById(id)),
+      testRight: () => test.q.choices.findIndex(c => c.right),
+      testLevel: () => test.level,
       rightIndex: () => round.q.choices.findIndex(c => c.right),
       currentKey: () => round.q.key,
       currentRound: () => round,
