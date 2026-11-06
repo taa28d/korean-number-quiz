@@ -708,7 +708,7 @@
         </button>
         <button id="sound-toggle" class="mode" aria-pressed="true">
           <span class="mode-icon t-green" lang="ko">소</span>
-          <span class="mode-text"><b>効果音</b><span id="sound-sub" class="mode-sub"></span></span>
+          <span class="mode-text"><b>効果音と読み上げ</b><span id="sound-sub" class="mode-sub"></span></span>
         </button>
         <button id="install" class="mode" hidden>
           <span class="mode-icon"><svg class="icon"><use href="#i-install"/></svg></span>
@@ -1306,6 +1306,16 @@
     let voice = null;
     let current = null;
     let watchdog = 0;
+    let primed = false;
+
+    // iPhoneは押した瞬間に一度読み上げ機能を使うと、少し後からの読み上げも許可される
+    function prime() {
+      if (!synth || primed) return;
+      primed = true;
+      const silent = new SpeechSynthesisUtterance('');
+      silent.volume = 0;
+      synth.speak(silent);
+    }
 
     function refresh() {
       if (!synth) return;
@@ -1345,7 +1355,7 @@
       refresh();
       if (synth.addEventListener) synth.addEventListener('voiceschanged', refresh);
     }
-    return { speak, stop, refresh, supported: Boolean(synth), hasVoice: () => Boolean(voice) };
+    return { speak, stop, prime, refresh, supported: Boolean(synth), hasVoice: () => Boolean(voice) };
   })();
 
   /* ━━ 7. 保存（localStorage） ━━
@@ -1355,6 +1365,7 @@
   const HISTORY_SIZE = 30;
   const PASS_SCORE = 8;        // 10問中これだけ正解すると次のレベルへ
   const ATTACK_SECONDS = 60;
+  const READ_DELAY = 420;      // 答えてから単語を読み上げるまでの時間（ミリ秒）
   const MODE_NAME = {
     read: '読み方', listen: '聞き取り', attack: 'タイムアタック',
     counter: '助数詞', konbini: 'コンビニ', review: '復習',
@@ -1533,17 +1544,20 @@
     const draw = {
       // ポキッ：一瞬の破裂音に、急に下がる短い音を重ねる
       tap(audio) {
-        crack(audio, .028, .42);
-        tone(audio, { shape: 'triangle', from: 1250, to: 230, length: .055, volume: .34 });
+        crack(audio, .014, .13);
+        tone(audio, { shape: 'triangle', from: 1500, to: 600, length: .03, volume: .1 });
       },
       right(audio, combo = 1) {
         const step = Math.min(combo - 1, SCALE.length - 1);
         tone(audio, { shape: 'triangle', from: SCALE[step], length: .1, volume: .26 });
         tone(audio, { shape: 'sine', from: SCALE[step] * 1.5, at: .085, length: .26, volume: .3 });
       },
+      // 木琴のようにやわらかい2音で下がる
       wrong(audio) {
-        tone(audio, { shape: 'triangle', from: 233, to: 196, length: .13, volume: .4 });
-        tone(audio, { shape: 'triangle', from: 185, to: 139, at: .12, length: .22, volume: .4 });
+        tone(audio, { shape: 'sine', from: 392, length: .16, volume: .3 });
+        tone(audio, { shape: 'sine', from: 1568, length: .04, volume: .05 });
+        tone(audio, { shape: 'sine', from: 311, at: .13, length: .24, volume: .3 });
+        tone(audio, { shape: 'sine', from: 1244, at: .13, length: .04, volume: .05 });
       },
     };
 
@@ -1734,6 +1748,7 @@
     if (!round) return;
     clearInterval(round.ticker);
     clearTimeout(round.autoNext);
+    clearTimeout(round.readTimer);
   }
 
   function tick() {
@@ -1750,7 +1765,7 @@
     round = {
       specs, mode, timed, sys: roundSys, level: roundLevel,
       index: 0, results: [], answered: false, q: null,
-      combo: 0, bestCombo: 0, score: 0, deadline: 0, ticker: 0, autoNext: 0,
+      combo: 0, bestCombo: 0, score: 0, deadline: 0, ticker: 0, autoNext: 0, readTimer: 0,
     };
     el.track.hidden = timed;
     el.timer.hidden = !timed;
@@ -1917,11 +1932,18 @@
     el.next.textContent = last ? '結果を見る' : '次の問題';
     el.next.disabled = false;
     el.next.focus({ preventScroll: true });
-    if (round.timed) round.autoNext = setTimeout(advance, correct ? 500 : 1400);
+    if (round.timed) {
+      round.autoNext = setTimeout(advance, correct ? 500 : 1400);
+    } else if (store.data.sound) {
+      // 効果音が鳴り終わってから単語を読む
+      speech.prime();
+      round.readTimer = setTimeout(() => speech.speak(q.say), READ_DELAY);
+    }
   }
 
   function advance() {
     clearTimeout(round.autoNext);
+    clearTimeout(round.readTimer);
     speech.stop();
     round.index += 1;
     if (round.timed && round.index >= round.specs.length) {
@@ -2119,6 +2141,7 @@
     el.listen.classList.add('peeked');
   });
   el.say.addEventListener('click', () => {
+    clearTimeout(round.readTimer);
     speech.speak(round.q.say, {
       onFail() {
         if (!el.reveal.querySelector('.say-failed')) {
