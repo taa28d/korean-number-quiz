@@ -706,6 +706,10 @@
           <span class="mode-text"><b>記録</b><span id="record-line" class="mode-sub"></span></span>
           <svg class="icon chevron"><use href="#i-chevron"/></svg>
         </button>
+        <button id="sound-toggle" class="mode" aria-pressed="true">
+          <span class="mode-icon t-green" lang="ko">소</span>
+          <span class="mode-text"><b>効果音</b><span id="sound-sub" class="mode-sub"></span></span>
+        </button>
         <button id="install" class="mode" hidden>
           <span class="mode-icon"><svg class="icon"><use href="#i-install"/></svg></span>
           <span class="mode-text"><b>アプリとして追加</b><span class="mode-sub">ホーム画面からすぐ開けます</span></span>
@@ -1362,6 +1366,7 @@
       review: {},
       sys: 'native',
       level: 1,
+      sound: true,
       unlocked: { native: 1, sino: 1, mix: 1 },
       best: {},
       history: [],
@@ -1381,6 +1386,7 @@
       if (!isRecord(saved)) return data;
       data.sys = saved.sys;
       data.level = saved.level;
+      if (saved.sound === false) data.sound = false;
       if (isRecord(saved.review)) data.review = saved.review;
       if (isRecord(saved.best)) {
         data.best = Object.fromEntries(Object.entries(saved.best).filter(([, entry]) => isEntry(entry)));
@@ -1478,6 +1484,81 @@
     return `${MODE_NAME[mode]} ${SYS_LABEL[sys]} Lv.${level}`;
   }
 
+  /* ━━ 効果音（Web Audio API） ━━
+     音声ファイルは使わず、その場で音を合成する。圏外でも鳴る。 */
+
+  const sound = (() => {
+    const AudioEngine = window.AudioContext || window.webkitAudioContext;
+    const SCALE = [523, 587, 659, 784, 880, 1047, 1175, 1319]; // 5音音階。コンボで1段ずつ上がる
+    let engine = null;
+    let noise = null;
+
+    function tone(audio, { shape, from, to = from, at = 0, length, volume }) {
+      const start = audio.currentTime + at;
+      const osc = audio.createOscillator();
+      const gain = audio.createGain();
+      osc.type = shape;
+      osc.frequency.setValueAtTime(from, start);
+      if (to !== from) osc.frequency.exponentialRampToValueAtTime(to, start + length);
+      gain.gain.setValueAtTime(volume, start);
+      gain.gain.exponentialRampToValueAtTime(.001, start + length);
+      osc.connect(gain);
+      gain.connect(audio.destination);
+      osc.start(start);
+      osc.stop(start + length + .01);
+    }
+
+    function crack(audio, length, volume) {
+      if (!noise || noise.sampleRate !== audio.sampleRate) {
+        noise = audio.createBuffer(1, Math.ceil(audio.sampleRate * length), audio.sampleRate);
+        const samples = noise.getChannelData(0);
+        for (let i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1;
+      }
+      const start = audio.currentTime;
+      const source = audio.createBufferSource();
+      const filter = audio.createBiquadFilter();
+      const gain = audio.createGain();
+      source.buffer = noise;
+      filter.type = 'bandpass';
+      filter.frequency.value = 2800;
+      filter.Q.value = 1.1;
+      gain.gain.setValueAtTime(volume, start);
+      gain.gain.exponentialRampToValueAtTime(.001, start + length);
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(audio.destination);
+      source.start(start);
+    }
+
+    const draw = {
+      // ポキッ：一瞬の破裂音に、急に下がる短い音を重ねる
+      tap(audio) {
+        crack(audio, .028, .42);
+        tone(audio, { shape: 'triangle', from: 1250, to: 230, length: .055, volume: .34 });
+      },
+      right(audio, combo = 1) {
+        const step = Math.min(combo - 1, SCALE.length - 1);
+        tone(audio, { shape: 'triangle', from: SCALE[step], length: .1, volume: .26 });
+        tone(audio, { shape: 'sine', from: SCALE[step] * 1.5, at: .085, length: .26, volume: .3 });
+      },
+      wrong(audio) {
+        tone(audio, { shape: 'triangle', from: 233, to: 196, length: .13, volume: .4 });
+        tone(audio, { shape: 'triangle', from: 185, to: 139, at: .12, length: .22, volume: .4 });
+      },
+    };
+
+    function play(name, combo) {
+      if (!AudioEngine || !store.data.sound) return;
+      try {
+        if (!engine) engine = new AudioEngine();
+        if (engine.state !== 'running') Promise.resolve(engine.resume()).catch(() => {});
+        draw[name](engine, combo);
+      } catch { /* 音が出せなくてもクイズは続ける */ }
+    }
+
+    return { play, draw };
+  })();
+
   /* ━━ 8. 画面 ━━ */
 
   const SYSTEMS = {
@@ -1564,6 +1645,11 @@
     $('review-sub').textContent = count ? `間違えた${count}問` : 'まだありません';
   }
 
+  function renderSoundSetting() {
+    $('sound-toggle').setAttribute('aria-pressed', String(store.data.sound));
+    $('sound-sub').textContent = store.data.sound ? 'オン' : 'オフ';
+  }
+
   function renderHomeRecord() {
     $('record-line').textContent = `ストリーク ${currentStreak()}日、最高 ${store.data.totals.bestCombo}コンボ`;
   }
@@ -1573,6 +1659,7 @@
     renderPickers();
     renderReview();
     renderHomeRecord();
+    renderSoundSetting();
   }
 
   function statBox(label, value, sub) {
@@ -1789,6 +1876,7 @@
     round.combo = correct ? round.combo + 1 : 0;
     round.bestCombo = Math.max(round.bestCombo, round.combo);
     if (correct) round.score += pointsFor(round.combo);
+    sound.play(correct ? 'right' : 'wrong', round.combo);
 
     const { totals } = store.data;
     totals.answered += 1;
@@ -1990,6 +2078,19 @@
     button.addEventListener('click', () => startRound(roundSpecs(button.dataset.mode, sys, level), button.dataset.mode));
   });
   options.forEach((button, i) => button.addEventListener('click', () => answer(i)));
+  $('sound-toggle').addEventListener('click', () => {
+    store.data.sound = !store.data.sound;
+    store.save();
+    renderSoundSetting();
+    sound.play('tap'); // オンにしたときだけ鳴る
+  });
+  // 選択肢は正解・不正解の音を鳴らすので、それ以外のボタンで「ポキッ」と鳴らす。
+  // 押した処理でボタンが無効になることがあるので、処理より先に判定する
+  document.addEventListener('click', event => {
+    const button = event.target.closest('button');
+    if (!button || button.disabled) return;
+    if (!button.classList.contains('option') && button.id !== 'sound-toggle') sound.play('tap');
+  }, true);
   el.next.addEventListener('click', advance);
   $('quit').addEventListener('click', goHome);
   $('back').addEventListener('click', goHome);
@@ -2002,7 +2103,10 @@
       erase.textContent = 'もう一度押すと消します。元に戻せません';
       return;
     }
+    const soundSetting = store.data.sound;
     store.reset();
+    store.data.sound = soundSetting;
+    store.save();
     sys = 'native';
     level = 1;
     disarmErase();
@@ -2079,7 +2183,7 @@
   // 自動テスト用の入口。テストのときだけ外から渡される
   if (window.__QUIZ_HOOK__) {
     window.__QUIZ_HOOK__({
-      build, roundSpecs, store, ITEMS, GOODS, PHRASES, ROUND_BIG, DAYS_IN_MONTH, range,
+      build, roundSpecs, store, sound, ITEMS, GOODS, PHRASES, ROUND_BIG, DAYS_IN_MONTH, range,
       playSpec: spec => startRound([spec], 'read'),
       rightIndex: () => round.q.choices.findIndex(c => c.right),
       currentKey: () => round.q.key,
