@@ -1502,7 +1502,6 @@
     const AudioEngine = window.AudioContext || window.webkitAudioContext;
     const SCALE = [523, 587, 659, 784, 880, 1047, 1175, 1319]; // 5音音階。コンボで1段ずつ上がる
     let engine = null;
-    let noise = null;
 
     function tone(audio, { shape, from, to = from, at = 0, length, volume }) {
       const start = audio.currentTime + at;
@@ -1519,45 +1518,20 @@
       osc.stop(start + length + .01);
     }
 
-    function crack(audio, length, volume) {
-      if (!noise || noise.sampleRate !== audio.sampleRate) {
-        noise = audio.createBuffer(1, Math.ceil(audio.sampleRate * length), audio.sampleRate);
-        const samples = noise.getChannelData(0);
-        for (let i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1;
-      }
-      const start = audio.currentTime;
-      const source = audio.createBufferSource();
-      const filter = audio.createBiquadFilter();
-      const gain = audio.createGain();
-      source.buffer = noise;
-      filter.type = 'bandpass';
-      filter.frequency.value = 2800;
-      filter.Q.value = 1.1;
-      gain.gain.setValueAtTime(volume, start);
-      gain.gain.exponentialRampToValueAtTime(.001, start + length);
-      source.connect(filter);
-      filter.connect(gain);
-      gain.connect(audio.destination);
-      source.start(start);
-    }
-
     const draw = {
-      // ポキッ：一瞬の破裂音に、急に下がる短い音を重ねる
+      // コツッ：木に軽く触れたような短い音
       tap(audio) {
-        crack(audio, .014, .13);
-        tone(audio, { shape: 'triangle', from: 1500, to: 600, length: .03, volume: .1 });
+        tone(audio, { shape: 'sine', from: 900, to: 500, length: .03, volume: .14 });
       },
       right(audio, combo = 1) {
         const step = Math.min(combo - 1, SCALE.length - 1);
         tone(audio, { shape: 'triangle', from: SCALE[step], length: .1, volume: .26 });
         tone(audio, { shape: 'sine', from: SCALE[step] * 1.5, at: .085, length: .26, volume: .3 });
       },
-      // 木琴のようにやわらかい2音で下がる
+      // コトッ：木をたたいたような低く短い音
       wrong(audio) {
-        tone(audio, { shape: 'sine', from: 392, length: .16, volume: .3 });
-        tone(audio, { shape: 'sine', from: 1568, length: .04, volume: .05 });
-        tone(audio, { shape: 'sine', from: 311, at: .13, length: .24, volume: .3 });
-        tone(audio, { shape: 'sine', from: 1244, at: .13, length: .04, volume: .05 });
+        tone(audio, { shape: 'sine', from: 190, to: 120, length: .1, volume: .5 });
+        tone(audio, { shape: 'triangle', from: 420, to: 220, length: .05, volume: .14 });
       },
     };
 
@@ -2106,7 +2080,7 @@
     renderSoundSetting();
     sound.play('tap'); // オンにしたときだけ鳴る
   });
-  // 選択肢は正解・不正解の音を鳴らすので、それ以外のボタンで「ポキッ」と鳴らす。
+  // 選択肢は正解・不正解の音を鳴らすので、それ以外のボタンで「コツッ」と鳴らす。
   // 押した処理でボタンが無効になることがあるので、処理より先に判定する
   document.addEventListener('click', event => {
     const button = event.target.closest('button');
