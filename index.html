@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>韓国語 数詞クイズ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="韓国語の固有数詞、漢数詞、助数詞を4択で覚えるクイズです。オフラインでも使えます。">
+<meta name="description" content="韓国語の数の言い方を、理解度テストで決めたレベルから4択で覚えるクイズです。オフラインでも使えます。">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f7f5ef">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#11131b">
 <meta name="mobile-web-app-capable" content="yes">
@@ -682,6 +682,7 @@
     .question { grid-column: 1; grid-row: 2 / span 2; padding-block: .5rem; }
     .options, .quiz[data-shape="wide"] .options { grid-column: 2; grid-row: 1 / span 2; grid-auto-rows: 1fr; }
     .option, .quiz[data-shape="wide"] .option { min-height: 2.75rem; }
+    .quiz[data-shape="wide"] .option { font-size: clamp(1rem, 3.1vw, 1.375rem); }
     .next { grid-column: 2; grid-row: 3; min-height: 2.75rem; }
     .result, .records { max-width: 44rem; }
     .receipt { padding-block: .125rem; line-height: 1.3; }
@@ -1257,53 +1258,66 @@
     return { ...base, prompt: '日付の言い方は？', show: { text: ja, lang: 'ja' }, choices: choiceSet(word, wrongForms, 'ko') };
   }
 
-  function buildTotal({ cart }) {
+  function buildTotal({ cart, listen, max }) {
     const lines = cart.map(([id, qty]) => ({ good: goodById(id), qty }));
     const total = lines.reduce((sum, { good, qty }) => sum + good.price * qty, 0);
     const word = priceWord(total);
     const ja = `${fmt(total)}ウォン`;
-    const near = closePrices(total);
-    const oneMissed = pickOne(lines.map(({ good, qty }) => total - good.price * qty)); // 1品足し忘れた金額
-    return {
+    const near = closePrices(total, max);
+    const base = {
       key: `total:${cart.map(line => line.join('*')).join(',')}`,
       word,
       note: ja,
       say: `전부 ${word}입니다`,
       pair: `${ja} = ${word}`,
       how: { text: `店員さんは 전부 ${word}입니다 と言います` },
+    };
+    if (listen) {
+      return { ...base, prompt: '店員さんの言った合計は？', choices: choiceSet(ja, near.map(x => `${fmt(x)}ウォン`), 'ja') };
+    }
+    const oneMissed = pickOne(lines.map(({ good, qty }) => total - good.price * qty)); // 1品足し忘れた金額
+    return {
+      ...base,
       prompt: '合計を韓国語で言うと？',
       receipt: { lines, total },
       choices: choiceSet(word, [...shuffle([oneMissed, ...near.slice(0, 3)]), ...near].map(priceWord), 'ko'),
     };
   }
 
-  // 「봉투 두 개 주세요」の形。数の間違いをいくつか混ぜる
-  function buildAsk(key, koName, n, askText, how) {
+  // 「봉투 두 개 주세요」の形。数の間違いをいくつか混ぜる。askOf は数から日本語の文を作る
+  function buildAsk({ key, koName, n, askOf, how, listen, early }) {
     const say = word => `${koName} ${word} 개 주세요`;
     const word = say(nativeBeforeUnit(n));
+    const wrong = wrongNumbers('native', n);
+    const base = { key, word, note: askOf(n), say: word, pair: word, how: { text: how } };
+    if (listen) {
+      return { ...base, prompt: '聞こえた注文はどれ？', choices: choiceSet(askOf(n), wrong.map(askOf), 'ja') };
+    }
     return {
-      key,
-      word,
-      note: askText,
-      say: word,
-      pair: word,
-      how: { text: how },
+      ...base,
       prompt: 'レジで何と言う？',
-      show: { text: askText, lang: 'ja' },
+      show: { text: askOf(n), lang: 'ja' },
       choices: choiceSet(word, [
         say(nativeWord(n)),
-        say(sinoWord(n)),
-        ...wrongNumbers('native', n).map(x => say(nativeBeforeUnit(x))),
+        ...(early ? [] : [say(sinoWord(n))]),
+        ...wrong.map(x => say(nativeBeforeUnit(x))),
       ], 'ko'),
     };
   }
 
-  const buildBag = ({ n }) =>
-    buildAsk(`bag:${n}`, '봉투', n, `袋を${n}枚ください`, '봉투 = 袋、주세요 = ください');
+  const buildBag = ({ n, listen, early }) => buildAsk({
+    key: `bag:${n}`, koName: '봉투', n, listen, early,
+    askOf: x => `袋を${x}枚ください`,
+    how: '봉투 = 袋、주세요 = ください',
+  });
 
-  function buildBuy({ good: id, n }) {
+  function buildBuy({ good: id, n, listen, early }) {
     const good = goodById(id);
-    return buildAsk(`buy:${id}:${n}`, good.ko, n, `${good.ja}を${n}個ください`, `${good.ko} = ${good.ja}、주세요 = ください`);
+    return buildAsk({
+      key: `buy:${id}:${n}`, koName: good.ko, n, listen, early,
+      askOf: x => `${good.ja}を${x}個ください`,
+      how: `${good.ko} = ${good.ja}、주세요 = ください`,
+    });
   }
 
   function buildPhrase({ id }) {
@@ -1418,11 +1432,55 @@
     ], 3);
   }
 
+  // 買い物かご。limit を渡すと、合計がそれ未満のかごだけを選ぶ
+  function pickCart(limit = Infinity) {
+    for (;;) {
+      const cart = sample(GOODS, pickOne([2, 2, 3])).map(good => [good.id, pickOne([1, 1, 2, 3])]);
+      if (cart.reduce((sum, [id, qty]) => sum + goodById(id).price * qty, 0) < limit) return cart;
+    }
+  }
+
+  const orderOf = cart => ({ t: 'buy', good: cart[0][0], n: cart[0][1] });
+
+  // コンビニ1：値段はまだ習っていないので、個数で注文するところまで
+  function shopOneSpecs() {
+    const orders = sample(GOODS, 7).map(good => ({ t: 'buy', good: good.id, n: pickOne(range(1, 5)), early: true }));
+    const bags = [1, 2, 3].map(n => ({ t: 'bag', n, early: true }));
+    return someListening([...orders, ...bags], 3);
+  }
+
+  // コンビニ2：1万ウォン未満の買い物で、値段と合計を言う
+  function shopTwoSpecs() {
+    const carts = distinct(5, () => pickCart(UNDER_MAN));
+    const total = cart => ({ t: 'total', cart, max: UNDER_MAN });
+    const heard = cart => ({ ...total(cart), listen: true });
+    return [
+      orderOf(carts[0]), { t: 'phrase', id: 'total' }, total(carts[0]),
+      orderOf(carts[1]), total(carts[1]), ...priceSpecs([pickOne(GOODS).price], UNDER_MAN),
+      orderOf(carts[2]), total(carts[2]), heard(carts[3]), heard(carts[4]),
+    ];
+  }
+
+  // コンビニ3：3回の買い物。注文 → 合計 → 袋 → 支払い の流れで、回ごとに少し変える
+  function shopThreeSpecs() {
+    const carts = [pickCart(), pickCart(), pickCart()];
+    const bags = shuffle([{ t: 'bag', n: 1 }, { t: 'bag', n: 2 }, { t: 'bag', n: 3 }, { t: 'phrase', id: 'noBag' }]);
+    const closing = sample(['card', 'cash', 'receipt', 'chopsticks', 'total', 'heat'], 3).map(id => ({ t: 'phrase', id }));
+    const total = cart => ({ t: 'total', cart });
+    return [
+      orderOf(carts[0]), total(carts[0]), closing[0],
+      total(carts[1]), bags[0], closing[1],
+      orderOf(carts[2]), total(carts[2]), bags[1], closing[2],
+    ];
+  }
+
   /* ━━ 6. 学ぶ順番 ━━
      レベルは上から順に開く。1回10問で PASS_SCORE 問正解すると次が開く。
+     コンビニ回は SHOP_EVERY レベルごとに開く。合格しなくても先のレベルには進める。
      cards は覚えるカード。[日本語, 韓国語] の組で、上から3つをホームの見出しにも使う。 */
 
   const PASS_SCORE = 8;
+  const SHOP_EVERY = 3;
 
   const cardsOf = (list, label, word) => list.map(n => [label(n), word(n)]);
 
@@ -1450,6 +1508,13 @@
       )),
     },
     {
+      shop: 1, name: 'コンビニ1', sample: '注文と袋',
+      note: 'ここまでの数え方で、注文と袋の頼み方を練習します。봉투は袋、주세요は「ください」です。',
+      cards: [['袋を2枚ください', '봉투 두 개 주세요'], ['コーヒーを1個ください', '커피 한 개 주세요']],
+      hero: [['袋', '봉투'], ['ください', '주세요']],
+      specs: shopOneSpecs,
+    },
+    {
       level: 4, name: 'いち、に、さん', sample: '일 이 삼',
       note: '「いち、に、さん」にあたる数え方です。韓国語の漢数詞といいます。',
       cards: cardsOf(range(1, 10), String, sinoWord),
@@ -1466,6 +1531,13 @@
       note: '値段は「いち、に、さん」の数え方で言います。百は백、千は천、원はウォンです。100や1,000は、1をつけずに言います。',
       cards: cardsOf([100, 500, 1000, 3500], n => `${fmt(n)}ウォン`, priceWord),
       specs: () => halfListening(levelSixSpecs()),
+    },
+    {
+      shop: 2, name: 'コンビニ2', sample: '値段と合計',
+      note: '1万ウォン未満の買い物で、値段と合計を言います。전부は「全部」、얼마は「いくら」です。',
+      cards: [['全部でいくらですか', PHRASES.total.ko], ['全部で3,000ウォンです', `전부 ${priceWord(3000)}입니다`]],
+      hero: [['全部', '전부'], ['いくら', '얼마']],
+      specs: shopTwoSpecs,
     },
     {
       level: 7, name: '日付', sample: '삼월 십오일',
@@ -1490,6 +1562,13 @@
       specs: () => halfListening(levelNineSpecs()),
     },
     {
+      shop: 3, name: 'コンビニ3', sample: '買い物ひと通り',
+      note: '注文から合計、袋、支払いまで、レジの流れで進めます。1万ウォンを超える買い物も出ます。',
+      cards: Object.values(PHRASES).map(phrase => [phrase.ask, phrase.ko]),
+      hero: [['カード', '카드'], ['レシート', '영수증']],
+      specs: shopThreeSpecs,
+    },
+    {
       level: 10, name: '使い分け', sample: '세 개, 삼월',
       note: '個数は「ひとつ」の数え方、値段と日付は「いち」の数え方です。場面で言い分けます。',
       cards: [['3個', '세 개'], ['3,000ウォン', priceWord(3000)], ['3月', monthWord(3)]],
@@ -1498,10 +1577,12 @@
   ];
 
   const LEVEL_COUNT = LESSONS.filter(lesson => lesson.level).length;
-  LESSONS.forEach(lesson => { lesson.id = `lv${lesson.level}`; });
+  const SHOP_COUNT = LESSONS.filter(lesson => lesson.shop).length;
+  LESSONS.forEach(lesson => { lesson.id = lesson.shop ? `shop${lesson.shop}` : `lv${lesson.level}`; });
 
   const lessonById = id => LESSONS.find(lesson => lesson.id === id);
-  const lessonTitle = lesson => `Lv.${lesson.level} ${lesson.name}`;
+  const lessonOfLevel = level => LESSONS.find(lesson => lesson.level === level);
+  const lessonTitle = lesson => (lesson.shop ? lesson.name : `Lv.${lesson.level} ${lesson.name}`);
 
   /* ━━ 7. 音声（Web Speech API） ━━ */
 
@@ -1579,7 +1660,8 @@
       review: {},
       sound: true,
       // placed：始める場所を決めたか。cleared：合格したレベルの数（レベルは順に開く）
-      course: { placed: false, cleared: 0 },
+      // shops：コンビニ回ごとの最高正解数。遊んだ回、飛ばした回だけが入る
+      course: { placed: false, cleared: 0, shops: {} },
       best: {},
       history: [],
       streak: { days: 0, best: 0, last: '' },
@@ -1588,7 +1670,13 @@
     const isRecord = value => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
     const count = value => (Number.isFinite(value) && value >= 0 ? value : 0);
     const isOldRound = ({ mode, sys, level }) => Boolean(OLD_MODE_NAME[mode] && OLD_SYS_NAME[sys]) && [1, 2, 3].includes(level);
-    const isRound = ({ mode, sys, level }) => !sys && (mode === 'lesson' ? Number.isInteger(level) && level >= 1 && level <= LEVEL_COUNT : Boolean(MODE_NAME[mode]));
+    const withinRange = (value, max) => Number.isInteger(value) && value >= 1 && value <= max;
+    const isRound = ({ mode, sys, level }) => {
+      if (sys) return false;
+      if (mode === 'lesson') return withinRange(level, LEVEL_COUNT);
+      if (mode === 'shop') return withinRange(level, SHOP_COUNT);
+      return Boolean(MODE_NAME[mode]);
+    };
     const isEntry = entry => isRecord(entry) && (isRound(entry) || isOldRound(entry))
       && [entry.score, entry.at, entry.correct, entry.total].every(Number.isFinite);
 
@@ -1605,9 +1693,13 @@
       }
       if (Array.isArray(saved.history)) data.history = saved.history.filter(isEntry).slice(0, HISTORY_SIZE);
       if (isRecord(saved.course)) {
-        const { placed, cleared } = saved.course;
+        const { placed, cleared, shops } = saved.course;
         data.course.placed = placed === true;
         if (Number.isInteger(cleared) && cleared >= 0 && cleared <= LEVEL_COUNT) data.course.cleared = cleared;
+        if (isRecord(shops)) {
+          data.course.shops = Object.fromEntries(Object.entries(shops).filter(([shop, correct]) =>
+            withinRange(Number(shop), SHOP_COUNT) && Number.isInteger(correct) && correct >= 0 && correct <= ROUND_SIZE));
+        }
       }
       if (isRecord(saved.streak)) {
         data.streak = { days: count(saved.streak.days), best: count(saved.streak.best), last: String(saved.streak.last || '') };
@@ -1694,19 +1786,26 @@
       if (mode === 'counter') return `${OLD_MODE_NAME.counter} Lv.${level}`;
       return `${OLD_MODE_NAME[mode]} ${OLD_SYS_NAME[sys]} Lv.${level}`;
     }
-    return mode === 'lesson' ? lessonTitle(lessonById(`lv${level}`)) : MODE_NAME[mode];
+    if (mode === 'lesson') return lessonTitle(lessonOfLevel(level));
+    if (mode === 'shop') return lessonTitle(lessonById(`shop${level}`));
+    return MODE_NAME[mode];
   }
 
   const course = () => store.data.course;
-  const isOpen = lesson => lesson.level <= course().cleared + 1;
-  const isPassed = lesson => lesson.level <= course().cleared;
+  const isOpen = lesson => (lesson.shop ? lesson.shop * SHOP_EVERY <= course().cleared : lesson.level <= course().cleared + 1);
+  const isPassed = lesson => (lesson.shop ? (course().shops[lesson.shop] ?? 0) >= PASS_SCORE : lesson.level <= course().cleared);
 
-  // 続きから始める場所
-  const nextLesson = () => LESSONS.find(lesson => lesson.level === Math.min(course().cleared + 1, LEVEL_COUNT));
+  // 続きから始める場所。今のレベルのすぐ前に、まだ遊んでいないコンビニ回があれば先に案内する
+  function nextLesson() {
+    const level = lessonOfLevel(Math.min(course().cleared + 1, LEVEL_COUNT));
+    const before = LESSONS[LESSONS.indexOf(level) - 1];
+    const shopWaiting = before && before.shop && isOpen(before) && course().shops[before.shop] === undefined;
+    return shopWaiting ? before : level;
+  }
 
   // タイムアタックは開いたレベルから出す。音を待つ時間がないので読む問題だけ
   function attackSpecs() {
-    const specs = LESSONS.filter(isOpen).flatMap(lesson => lesson.specs());
+    const specs = LESSONS.filter(lesson => lesson.level && isOpen(lesson)).flatMap(lesson => lesson.specs());
     return shuffle(specs.map(({ listen, ...spec }) => spec));
   }
 
@@ -1796,6 +1895,8 @@
     return node;
   }
 
+  const SHOP_HINT = 'レジの流れで10問';
+
   // 語が長いレベルは、見出しの文字を小さくして折り返しを防ぐ
   const LONG_HERO = 5;
 
@@ -1824,16 +1925,22 @@
     row.dataset.lesson = lesson.id;
     row.disabled = !isOpen(lesson);
     const text = make('span', 'mode-text');
-    text.append(make('b', '', lessonTitle(lesson)), make('span', 'mode-sub', lesson.sample, 'ko'));
-    row.append(make('span', `mode-icon level-icon${passed ? ' passed' : ''}`, passed ? '✓' : String(lesson.level)), text, chevron());
+    text.append(make('b', '', lessonTitle(lesson)), make('span', 'mode-sub', lesson.sample, lesson.shop ? undefined : 'ko'));
+    const icon = passed
+      ? make('span', 'mode-icon level-icon passed', '✓')
+      : lesson.shop
+        ? make('span', 'mode-icon t-yellow', '원', 'ko')
+        : make('span', 'mode-icon level-icon', String(lesson.level));
+    row.append(icon, text, chevron());
     return row;
   }
 
   function renderCourse() {
     const current = nextLesson();
     const allPassed = isPassed(current);
+    const hint = current.shop ? SHOP_HINT : `10問中${PASS_SCORE}問正解で次のレベルへ`;
     $('continue-name').textContent = `${allPassed ? 'もう一度' : '続きから'}：${lessonTitle(current)}`;
-    $('continue-sub').textContent = allPassed ? '全レベル合格です。おめでとうございます' : `10問中${PASS_SCORE}問正解で次のレベルへ`;
+    $('continue-sub').textContent = allPassed ? '全レベル合格です。おめでとうございます' : hint;
     $('lessons').replaceChildren(...LESSONS.map(lesson => lessonRow(lesson, current)));
   }
 
@@ -1841,8 +1948,9 @@
     openedLesson = lesson;
     $('lesson-name').textContent = lessonTitle(lesson);
     $('lesson-note').textContent = lesson.note;
-    $('lesson-sub').textContent = '読む問題と聞く問題で10問';
+    $('lesson-sub').textContent = lesson.shop ? SHOP_HINT : '読む問題と聞く問題で10問';
     $('card-note').hidden = true;
+    $('cards').classList.toggle('wide', Boolean(lesson.shop));
     $('cards').replaceChildren(...lesson.cards.map(([label, word]) => {
       const card = make('button', 'card');
       card.dataset.say = word;
@@ -1870,7 +1978,6 @@
 
   const test = { level: 1, step: 0, specs: [], q: null };
   const QUESTIONS_PER_TEST_LEVEL = 2;
-  const lessonOfLevel = level => LESSONS.find(lesson => lesson.level === level);
   const testSpecs = level => sample(lessonOfLevel(level).specs().filter(spec => !spec.listen), QUESTIONS_PER_TEST_LEVEL);
 
   function startTest() {
@@ -1920,6 +2027,10 @@
     const lesson = lessonOfLevel(start);
     course().placed = true;
     course().cleared = Math.max(before, start - 1);
+    // 飛ばした分のコンビニ回は開いたままにして、続きからの案内には出さない
+    for (const shop of LESSONS.filter(other => other.shop && isOpen(other))) {
+      course().shops[shop.shop] ??= 0;
+    }
     store.save();
 
     const ahead = before >= start;
@@ -2061,7 +2172,7 @@
     }
   }
 
-  const playLesson = lesson => startRound(lesson.specs(), 'lesson', lesson);
+  const playLesson = lesson => startRound(lesson.specs(), lesson.shop ? 'shop' : 'lesson', lesson);
 
   function renderCombo() {
     el.combo.hidden = round.combo < 2;
@@ -2238,11 +2349,11 @@
   function recordRound() {
     const { mode, lesson, results, score, bestCombo } = round;
     const key = bestKey(round);
-    const outcome = { best: 0, newBest: false, passed: false, opened: null, allPassed: false };
+    const outcome = { best: 0, newBest: false, passed: false, opened: [], allPassed: false };
     if (results.length) {
       const correct = results.filter(r => r.correct).length;
       const entry = { at: Date.now(), mode, correct, total: results.length, score, combo: bestCombo };
-      if (lesson) entry.level = lesson.level;
+      if (lesson) entry.level = lesson.shop || lesson.level;
       store.data.history = [entry, ...store.data.history].slice(0, HISTORY_SIZE);
 
       if (key) {
@@ -2252,10 +2363,15 @@
         outcome.best = store.data.best[key].score;
       }
 
-      outcome.passed = Boolean(lesson) && results.length === ROUND_SIZE && correct >= PASS_SCORE;
+      const finished = Boolean(lesson) && results.length === ROUND_SIZE;
+      outcome.passed = finished && correct >= PASS_SCORE;
+      if (finished && lesson.shop) {
+        course().shops[lesson.shop] = Math.max(course().shops[lesson.shop] ?? 0, correct);
+      }
       if (outcome.passed && lesson.level === course().cleared + 1) {
+        const wasOpen = LESSONS.filter(isOpen);
         course().cleared = lesson.level;
-        outcome.opened = LESSONS.find(other => other.level === lesson.level + 1) || null;
+        outcome.opened = LESSONS.filter(other => isOpen(other) && !wasOpen.includes(other));
         outcome.allPassed = lesson.level === LEVEL_COUNT;
       }
       store.save();
@@ -2293,7 +2409,7 @@
       notes.push(wrong.length ? '間違えた問題は復習リストに保存しました。' : '全問正解です。');
     }
     if (outcome.newBest) notes.push('自己ベストを更新しました。');
-    if (outcome.opened) notes.push(`${lessonTitle(outcome.opened)} が開きました。`);
+    if (outcome.opened.length) notes.push(`${outcome.opened.map(lessonTitle).join('と')} が開きました。`);
     if (outcome.allPassed) notes.push('全レベル合格です。おめでとうございます。');
     $('score-note').textContent = notes.join('');
 
@@ -2320,8 +2436,10 @@
     }));
 
     const goNext = $('go-next');
-    const onward = outcome.opened ? nextLesson() : null;
-    goNext.hidden = !onward;
+    // 新しいレベルに合格したとき、コンビニ回を終えたときだけ、次の場所へ案内する
+    const moved = outcome.opened.length || outcome.allPassed || (lesson && lesson.shop);
+    const onward = moved ? nextLesson() : null;
+    goNext.hidden = !onward || isPassed(onward);
     if (onward) {
       goNext.textContent = `次へ：${lessonTitle(onward)}`;
       goNext.onclick = () => openLesson(onward);
@@ -2399,6 +2517,7 @@
   testChoices.forEach((button, i) => button.addEventListener('click', () => answerTest(test.q.choices[i].right)));
   $('placed-restart').addEventListener('click', () => {
     course().cleared = 0;
+    course().shops = {};
     store.save();
     openLesson(lessonOfLevel(1));
   });
