@@ -188,38 +188,28 @@
   .hero-word { display: grid; }
   .hero-word .digit { font-size: .875rem; line-height: 1.3; }
   .hero-word [lang="ko"] { font-family: var(--display); font-size: clamp(2.5rem, 13vw, 3.25rem); line-height: 1.1; white-space: nowrap; }
-  .hero[data-sys="mix"] { gap: .25rem 1.125rem; }
-  .hero[data-sys="mix"] .hero-word [lang="ko"] { font-size: clamp(1.625rem, 8vw, 2.25rem); }
-  .settings, .plays { display: grid; gap: 1.25rem; align-content: start; min-width: 0; }
+  .hero[data-long] { gap: .25rem 1.125rem; }
+  .hero[data-long] .hero-word [lang="ko"] { font-size: clamp(1.625rem, 8vw, 2.25rem); }
+  .course, .plays { display: grid; gap: 1.25rem; align-content: start; min-width: 0; }
   .group { display: grid; gap: .5rem; min-width: 0; }
   .heading { font-size: .9375rem; font-weight: 700; color: var(--muted); line-height: 1.4; }
   .note { font-size: .9375rem; color: var(--muted); line-height: 1.55; }
   .note.warn { padding: .625rem .75rem; background: var(--accent-soft); color: var(--text); border-radius: var(--radius); }
 
-  .picker {
+  .primary {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: .25rem;
-    padding: .25rem;
-    background: var(--sunken);
+    gap: .125rem;
+    width: 100%;
+    min-height: 3.5rem;
+    padding: .625rem 1rem;
+    background: var(--accent);
+    color: var(--on-accent);
     border-radius: var(--radius);
+    text-align: left;
   }
-  .seg {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-width: 0;
-    min-height: 3.625rem;
-    padding: .25rem .125rem;
-    border-radius: 9px;
-    line-height: 1.3;
-    text-align: center;
-  }
-  .seg b { font-size: clamp(.875rem, 4.1vw, 1rem); font-weight: 700; white-space: nowrap; }
-  .seg span { font-size: .875rem; white-space: nowrap; }
-  .seg[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
-  .seg:disabled { color: var(--muted); cursor: default; }
+  .primary b { font-size: 1.125rem; font-weight: 700; line-height: 1.35; }
+  .primary span { font-size: .9375rem; line-height: 1.4; }
+  .primary.center { justify-items: center; text-align: center; }
 
   .modes {
     display: grid;
@@ -262,7 +252,36 @@
   .mode .chevron { width: 1.25rem; height: 1.25rem; color: var(--muted); }
   .mode:disabled { cursor: default; }
   .mode:disabled .mode-icon { background: var(--sunken); color: var(--muted); }
+  .mode:disabled .mode-text { color: var(--muted); }
   .mode:disabled .chevron { visibility: hidden; }
+  .mode-icon.level-icon { font-family: var(--sans); font-size: 1.125rem; font-weight: 700; }
+  .mode-icon.passed { background: var(--good); color: var(--on-good); }
+  .mode.now { background: var(--accent-soft); }
+  .mode.now .mode-icon { background: var(--accent); color: var(--on-accent); }
+
+  /* ── レベルの画面 ── */
+  .lesson {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    max-width: 38rem;
+    margin-inline: auto;
+    padding-block: .75rem 1.5rem;
+  }
+  .back {
+    justify-self: start;
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    min-height: 2.75rem;
+    padding-inline: 0 .75rem;
+    color: var(--accent-text);
+    font-size: 1rem;
+    font-weight: 700;
+  }
+  .back .icon { width: 1.25rem; height: 1.25rem; transform: rotate(180deg); }
+  .lead { display: grid; gap: .375rem; }
+  .lead h2 { font-size: 1.375rem; font-weight: 700; line-height: 1.3; text-wrap: balance; }
 
   /* ── 問題画面 ── */
   .quiz {
@@ -480,7 +499,7 @@
   .next { width: 100%; background: var(--accent); color: var(--on-accent); }
   .next:disabled { visibility: hidden; }
   .action { width: 100%; background: var(--surface); border: 1.5px solid var(--line); }
-  #review, #review[hidden] + #retry { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .action.main { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 
   /* ── 結果画面・記録画面 ── */
   .result, .records {
@@ -607,7 +626,6 @@
     .question { grid-column: 1; grid-row: 2 / span 2; padding-block: .5rem; }
     .options, .quiz[data-shape="wide"] .options { grid-column: 2; grid-row: 1 / span 2; grid-auto-rows: 1fr; }
     .option, .quiz[data-shape="wide"] .option { min-height: 2.75rem; }
-    .seg b { font-size: .875rem; }
     .next { grid-column: 2; grid-row: 3; min-height: 2.75rem; }
     .result, .records { max-width: 44rem; }
     .receipt { padding-block: .125rem; line-height: 1.3; }
@@ -616,9 +634,9 @@
   }
 
   @media (hover: hover) {
-    .mode:hover:enabled, .seg:hover:enabled:not([aria-pressed="true"]) { background: var(--accent-soft); }
+    .mode:hover:enabled { background: var(--accent-soft); }
     .option:hover:enabled, .action:hover { border-color: var(--accent); }
-    .next:hover, .listen-btn:hover { filter: brightness(1.08); }
+    .next:hover, .listen-btn:hover, .primary:hover { filter: brightness(1.08); }
   }
   button:active:enabled { filter: brightness(.95); }
 
@@ -643,62 +661,24 @@
       <div id="hero" class="hero"></div>
     </header>
 
-    <div class="settings">
-      <div class="group">
-        <h2 class="heading">数え方</h2>
-        <div id="sys" class="picker" role="group" aria-label="数え方">
-          <button class="seg" data-sys="native"><b>固有数詞</b><span lang="ko">하나 둘 셋</span></button>
-          <button class="seg" data-sys="sino"><b>漢数詞</b><span lang="ko">일 이 삼</span></button>
-          <button class="seg" data-sys="mix"><b>場面ミックス</b><span>使い分ける</span></button>
-        </div>
-        <p id="sys-note" class="note"></p>
-      </div>
+    <div class="course">
+      <button id="continue" class="primary"><b id="continue-name"></b><span id="continue-sub"></span></button>
       <div class="group">
         <h2 class="heading">レベル</h2>
-        <div id="levels" class="picker" role="group" aria-label="レベル">
-          <button class="seg" data-level="1"></button>
-          <button class="seg" data-level="2"></button>
-          <button class="seg" data-level="3"></button>
-        </div>
-        <p id="level-note" class="note" hidden></p>
+        <div id="lessons" class="modes"></div>
       </div>
     </div>
 
     <div class="plays">
-      <div class="group">
-        <h2 class="heading">遊び方</h2>
-        <div class="modes">
-          <button class="mode" data-mode="read">
-            <span class="mode-icon t-blue" lang="ko">읽</span>
-            <span class="mode-text"><b>読み方</b><span class="mode-sub">ハングルと数字を結ぶ</span></span>
-            <svg class="icon chevron"><use href="#i-chevron"/></svg>
-          </button>
-          <button class="mode" data-mode="listen">
-            <span class="mode-icon t-red" lang="ko">듣</span>
-            <span class="mode-text"><b>聞き取り</b><span class="mode-sub">音声を聞いて答える</span></span>
-            <svg class="icon chevron"><use href="#i-chevron"/></svg>
-          </button>
-          <button class="mode" data-mode="counter">
-            <span class="mode-icon t-green" lang="ko">개</span>
-            <span class="mode-text"><b>助数詞</b><span class="mode-sub">〜個、〜人、〜杯の言い方</span></span>
-            <svg class="icon chevron"><use href="#i-chevron"/></svg>
-          </button>
-          <button class="mode" data-mode="konbini">
-            <span class="mode-icon t-yellow" lang="ko">원</span>
-            <span class="mode-text"><b>コンビニ</b><span class="mode-sub">合計を言う、袋を頼む</span></span>
-            <svg class="icon chevron"><use href="#i-chevron"/></svg>
-          </button>
-          <button class="mode" data-mode="attack">
-            <span class="mode-icon t-purple" lang="ko">초</span>
-            <span class="mode-text"><b>タイムアタック</b><span class="mode-sub">60秒で何問解けるか</span></span>
-            <svg class="icon chevron"><use href="#i-chevron"/></svg>
-          </button>
-        </div>
-      </div>
       <div class="modes">
-        <button id="review-mode" class="mode" data-mode="review">
+        <button id="review-mode" class="mode">
           <span class="mode-icon t-red" lang="ko">복</span>
           <span class="mode-text"><b>復習</b><span id="review-sub" class="mode-sub"></span></span>
+          <svg class="icon chevron"><use href="#i-chevron"/></svg>
+        </button>
+        <button id="attack-mode" class="mode">
+          <span class="mode-icon t-purple" lang="ko">초</span>
+          <span class="mode-text"><b>タイムアタック</b><span class="mode-sub">開いたレベルから60秒</span></span>
           <svg class="icon chevron"><use href="#i-chevron"/></svg>
         </button>
         <button id="records-open" class="mode">
@@ -719,6 +699,15 @@
       <p id="install-note" class="note" hidden>Safariの共有ボタンから「ホーム画面に追加」を選ぶと、アプリとして使えます。</p>
       <p id="voice-note" class="note warn" hidden></p>
     </div>
+  </section>
+
+  <section id="lesson" class="lesson" hidden>
+    <button id="lesson-back" class="back"><svg class="icon"><use href="#i-chevron"/></svg>レベル一覧</button>
+    <div class="lead">
+      <h2 id="lesson-name"></h2>
+      <p id="lesson-note" class="note"></p>
+    </div>
+    <button id="lesson-start" class="primary center"><b>練習を始める</b><span id="lesson-sub"></span></button>
   </section>
 
   <section id="quiz" class="quiz" hidden>
@@ -766,6 +755,7 @@
     </div>
     <div id="stats" class="stats"></div>
     <div id="actions" class="actions">
+      <button id="go-next" class="action" hidden></button>
       <button id="review" class="action" hidden></button>
       <button id="retry" class="action">もう一度</button>
       <button id="back" class="action">ホームに戻る</button>
@@ -789,7 +779,7 @@
         <ul id="history-list" class="rows"></ul>
       </div>
     </div>
-    <button id="erase" class="action">記録をすべて消す</button>
+    <button id="erase" class="action">記録とレベルをすべて消す</button>
   </section>
 </main>
 <div id="burst" class="burst" aria-hidden="true"></div>
@@ -926,10 +916,10 @@
 
   const poolOf = n => (n <= 10 ? range(1, 10) : n < 100 ? range(10, 99) : ROUND_BIG);
 
-  function wrongNumbers(sys, n) {
+  // pool：選択肢に出してよい数。習っていない言葉を混ぜないために、レベルごとに絞る
+  function wrongNumbers(sys, n, pool = poolOf(n)) {
     const native = sys === 'native';
     const table = native ? LOOK_NATIVE : LOOK_SINO;
-    const pool = poolOf(n);
     const ten = n - n % 10;
     const one = n % 10;
     const close = [];
@@ -963,7 +953,7 @@
     return wrong;
   }
 
-  function closePrices(n) {
+  function closePrices(n, max = 100000) {
     const unit = 10 ** (String(n).length - 1);
     const lead = Math.floor(n / unit);
     const nextUnit = unit / 10;
@@ -971,7 +961,7 @@
     const near = LOOK_SINO[lead].filter(x => x < 10).map(x => n + (x - lead) * unit);
     if (second) near.push(...LOOK_SINO[second].filter(x => x < 10).map(x => n + (x - second) * nextUnit));
     near.push(n + unit, n - unit, n * 10, n + nextUnit);
-    return shuffle([...new Set(near)]).filter(x => x > 0 && x !== n && x % 100 === 0 && x < 100000);
+    return shuffle([...new Set(near)]).filter(x => x > 0 && x !== n && x % 100 === 0 && x < max);
   }
 
   // 値段を固有数詞で言ってしまった形（実際には使わない言い方）
@@ -1003,8 +993,6 @@
   /* ━━ 4. 問題を組み立てる ━━
      spec は問題の中身だけを持つ小さな記録。build(spec) で画面に出す形にする。 */
 
-  const SYS_NAME = { native: '固有数詞', sino: '漢数詞' };
-
   function placeValues(n) {
     return [...String(n)]
       .map((digit, i, all) => Number(digit) * 10 ** (all.length - 1 - i))
@@ -1018,10 +1006,10 @@
     return { text: placeValues(n).map(p => `${wordOf(p)} ${fmt(p)}`).join(' + '), lang: 'ko' };
   }
 
-  function buildNumber({ sys, n, listen }) {
+  function buildNumber({ sys, n, listen, pool }) {
     const wordOf = sys === 'native' ? nativeWord : sinoWord;
     const word = wordOf(n);
-    const wrong = wrongNumbers(sys, n);
+    const wrong = pool ? wrongNumbers(sys, n, range(...pool)) : wrongNumbers(sys, n);
     const base = {
       key: `num:${sys}:${n}`,
       word,
@@ -1043,13 +1031,14 @@
     }
     return {
       ...base,
-      prompt: `この数を${SYS_NAME[sys]}で言うと？`,
+      prompt: 'この数を韓国語で言うと？',
       show: { text: fmt(n), lang: 'ja' },
       choices: choiceSet(word, wrong.map(wordOf), 'ko'),
     };
   }
 
-  function buildCounter({ item: id, n, ask, listen }) {
+  // early：まだ「いち、に、さん」の数え方を習っていない段階。その言葉を選択肢に出さない
+  function buildCounter({ item: id, n, ask, listen, early }) {
     const item = itemById(id);
     const unitJa = UNITS[item.c];
     const form = nativeBeforeUnit(n);
@@ -1065,7 +1054,7 @@
       note: ja,
       say: word,
       pair: `${ja} = ${word}`,
-      how: { text: `${plain === form ? '' : `助数詞の前で ${plain} → ${form}。`}${item.c} = ${unitJa}` },
+      how: { text: `${plain === form ? '' : `数える言葉の前で ${plain} → ${form}。`}${item.c} = ${unitJa}` },
     };
     if (listen) {
       return { ...base, prompt: '聞こえたのはどれ？', choices: choiceSet(ja, others.map(jaOf), 'ja') };
@@ -1076,7 +1065,7 @@
     if (ask === 'unit') {
       return {
         ...base,
-        prompt: '□に入る助数詞は？',
+        prompt: '□に入る言葉は？',
         show: { text: `${item.ko} ${form} □`, lang: 'ko' },
         gloss: ja,
         choices: choiceSet(item.c, Object.keys(UNITS), 'ko'),
@@ -1084,16 +1073,16 @@
     }
     const wrongForms = [
       ...(plain === form ? [] : [koOf(plain)]),
-      koOf(sinoWord(n)),
+      ...(early ? [] : [koOf(sinoWord(n))]),
       ...others.map(x => koOf(nativeBeforeUnit(x))),
     ];
-    return { ...base, prompt: '個数の言い方は？', show: { text: ja, lang: 'ja' }, choices: choiceSet(word, wrongForms, 'ko') };
+    return { ...base, prompt: '韓国語で言うと？', show: { text: ja, lang: 'ja' }, choices: choiceSet(word, wrongForms, 'ko') };
   }
 
-  function buildPrice({ n, listen }) {
+  function buildPrice({ n, listen, max }) {
     const word = priceWord(n);
     const ja = `${fmt(n)}ウォン`;
-    const near = closePrices(n);
+    const near = closePrices(n, max);
     const base = {
       key: `price:${n}`,
       word,
@@ -1215,91 +1204,175 @@
 
   /* ━━ 5. 1回分の問題を選ぶ ━━ */
 
-  function pickNumbers(sys, level) {
-    if (level === 1) return shuffle(range(1, 10));
-    if (level === 2) {
-      // 2桁は 스물・서른 などの十の位を覚えないと読めないので、切りのいい数を必ず混ぜる
-      const others = sample(range(11, 99).filter(n => n % 10), ROUND_SIZE - 3);
-      return shuffle([...sample(range(20, 90, 10), 3), ...others]);
+  // 同じものが重ならないように count 個作る
+  function distinct(count, make) {
+    const found = new Map();
+    while (found.size < count) {
+      const value = make();
+      found.set(JSON.stringify(value), value);
     }
-    if (sys === 'sino') return shuffle([...sample(range(1, 99), 6), ...sample(ROUND_BIG, 4)]);
-    return sample(range(1, 99), ROUND_SIZE);
+    return [...found.values()];
   }
 
-  function pickPrice(level) {
-    const small = () => pickOne(range(1, 9)) * pickOne([100, 1000]);
-    const large = () => (Math.random() < .5
-      ? pickOne(range(1, 9)) * 1000 + pickOne(range(1, 9)) * 100
-      : pickOne(range(1, 9)) * 10000 + pickOne(range(0, 9)) * 1000);
-    if (level === 1) return small();
-    if (level === 2) return large();
-    return Math.random() < .5 ? small() : large();
+  // 同じ数が続くと答えが読めてしまうので、離れるまで並べ直す
+  function spaced(specs) {
+    let list = shuffle(specs);
+    for (let tries = 0; tries < 50 && list.some((spec, i) => i && spec.n === list[i - 1].n); tries++) {
+      list = shuffle(specs);
+    }
+    return list;
   }
 
-  function pickDate(level) {
-    const m = pickOne(range(1, 12));
-    const max = DAYS_IN_MONTH[m - 1];
-    const d = pickOne(level === 1 ? range(1, 10) : level === 2 ? range(11, max) : range(1, max));
-    return { m, d };
-  }
+  const numberSpecs = (sys, list, pool) => list.map(n => ({ t: 'num', sys, n, ...(pool && { pool }) }));
+  const priceSpecs = (list, max) => list.map(n => ({ t: 'price', n, ...(max && { max }) }));
+  const readAndListen = specs => specs.flatMap(spec => [spec, { ...spec, listen: true }]);
+  const someListening = (specs, count) => shuffle(specs).map((spec, i) => (i < count ? { ...spec, listen: true } : spec));
+  const halfListening = specs => someListening(specs, specs.length / 2);
 
-  function sceneSpecs(level) {
-    const seen = new Set();
-    const specs = [];
-    const add = (count, make) => {
-      while (specs.length < count) {
-        const spec = make();
-        const key = build(spec).key;
-        if (!seen.has(key)) { seen.add(key); specs.push(spec); }
-      }
-    };
-    const numbers = pickNumbers('native', level);
-    add(4, () => ({ t: 'cnt', item: pickOne(ITEMS).id, n: numbers[specs.length], ask: 'ko' }));
-    add(7, () => ({ t: 'price', n: pickPrice(level) }));
-    add(ROUND_SIZE, () => ({ t: 'date', ...pickDate(level) }));
-    return shuffle(specs);
-  }
+  // 2桁は 스물・서른 や 이십・삼십 の十の位を覚えないと読めないので、切りのいい数を必ず混ぜる
+  const twoDigits = (rounds, others) => [
+    ...sample(range(20, 90, 10), rounds),
+    ...sample(range(21, 99).filter(n => n % 10), others),
+  ];
 
-  function counterSpecs(level) {
-    const asks = shuffle(['ko', 'ko', 'ko', 'ko', 'unit', 'unit', 'unit', 'ja', 'ja', 'ja']);
-    const units = Object.keys(UNITS);
-    return pickNumbers('native', level).map((n, i) => ({
+  function countSpecs(numbers, asks, early) {
+    const units = shuffle(Object.keys(UNITS));
+    const items = units.map(unit => shuffle(ITEMS.filter(item => item.c === unit)));
+    const order = shuffle(asks);
+    return numbers.map((n, i) => ({
       t: 'cnt',
-      item: pickOne(ITEMS.filter(item => item.c === units[i % units.length])).id,
+      item: items[i % units.length][Math.floor(i / units.length)].id,
       n,
-      ask: asks[i],
+      ask: order[i] === 'listen' ? 'ko' : order[i],
+      ...(order[i] === 'listen' && { listen: true }),
+      ...(early && { early: true }),
     }));
   }
 
-  function pickCart() {
-    return sample(GOODS, pickOne([2, 2, 3])).map(good => [good.id, pickOne([1, 1, 2, 3])]);
+  const digit = () => pickOne(range(1, 9));
+  const pickDate = (months = range(1, 12)) => {
+    const m = pickOne(months);
+    return { t: 'date', m, d: pickOne(range(1, DAYS_IN_MONTH[m - 1])) };
+  };
+
+  // 値段：Lv.6は1万未満。選択肢にも1万以上を出さない
+  const UNDER_MAN = 10000;
+  const levelSixSpecs = () => priceSpecs([
+    ...distinct(3, () => digit() * 100),
+    ...distinct(3, () => digit() * 1000),
+    ...distinct(4, () => digit() * 1000 + digit() * 100),
+  ], UNDER_MAN);
+
+  const levelNineSpecs = () => priceSpecs([
+    ...distinct(3, () => digit() * 10000),
+    ...distinct(5, () => digit() * 10000 + digit() * 1000),
+    ...distinct(2, () => digit() * 10000 + digit() * 1000 + digit() * 100),
+  ]);
+
+  // 日付：形が変わる6月と10月は毎回出す
+  const levelSevenSpecs = () => [
+    ...distinct(8, () => pickDate(range(1, 12).filter(m => m !== 6 && m !== 10))),
+    pickDate([6]),
+    pickDate([10]),
+  ];
+
+  // 使い分け：個数は固有数詞、値段と日付は漢数詞
+  function levelTenSpecs() {
+    const counts = [...sample(range(1, 10), 2), ...sample(range(11, 99), 2)];
+    const prices = [digit() * 1000, digit() * 1000 + digit() * 100, digit() * 10000 + digit() * 1000];
+    return someListening([
+      ...countSpecs(counts, ['ko', 'ko', 'ko', 'ko']),
+      ...priceSpecs(prices),
+      ...distinct(3, pickDate),
+    ], 3);
   }
 
-  // 3回の買い物：注文 → 合計 → 袋 → 支払い の流れで、回ごとに少し変える
-  function konbiniSpecs() {
-    const carts = [pickCart(), pickCart(), pickCart()];
-    const bags = shuffle([{ t: 'bag', n: 1 }, { t: 'bag', n: 2 }, { t: 'bag', n: 3 }, { t: 'phrase', id: 'noBag' }]);
-    const closing = sample(['card', 'cash', 'receipt', 'chopsticks', 'total', 'heat'], 3).map(id => ({ t: 'phrase', id }));
-    const order = cart => ({ t: 'buy', good: cart[0][0], n: cart[0][1] });
-    const total = cart => ({ t: 'total', cart });
-    return [
-      order(carts[0]), total(carts[0]), closing[0],
-      total(carts[1]), bags[0], closing[1],
-      order(carts[2]), total(carts[2]), bags[1], closing[2],
-    ];
-  }
+  /* ━━ 6. 学ぶ順番 ━━
+     レベルは上から順に開く。1回10問で PASS_SCORE 問正解すると次が開く。
+     cards は覚えるカード。[日本語, 韓国語] の組で、上から3つをホームの見出しにも使う。 */
 
-  function roundSpecs(mode, sys, level) {
-    if (mode === 'review') return reviewSpecs();
-    if (mode === 'konbini') return konbiniSpecs();
-    if (mode === 'counter') return counterSpecs(level);
-    const specs = sys === 'mix'
-      ? sceneSpecs(level)
-      : pickNumbers(sys, level).map(n => ({ t: 'num', sys, n }));
-    return mode === 'listen' ? specs.map(spec => ({ ...spec, listen: true })) : specs;
-  }
+  const PASS_SCORE = 8;
 
-  /* ━━ 6. 音声（Web Speech API） ━━ */
+  const cardsOf = (list, label, word) => list.map(n => [label(n), word(n)]);
+
+  const LESSONS = [
+    {
+      level: 1, name: 'はじめの5つ', sample: '하나 둘 셋',
+      note: '「ひとつ、ふたつ」にあたる数え方です。韓国語の固有数詞といいます。',
+      cards: cardsOf(range(1, 5), String, nativeWord),
+      specs: () => spaced(readAndListen(numberSpecs('native', range(1, 5), [1, 5]))),
+    },
+    {
+      level: 2, name: '10まで数える', sample: '여섯 일곱 여덟',
+      note: '「ひとつ、ふたつ」の続きを、10まで覚えます。',
+      cards: cardsOf(range(6, 10), String, nativeWord),
+      specs: () => spaced(readAndListen(numberSpecs('native', range(6, 10)))),
+    },
+    {
+      level: 3, name: '物を数える', sample: '한 개, 두 명',
+      note: '物や人を数えるときは、数の形が少し変わります。하나は한、둘は두、셋は세、넷は네になります。개（個）や명（人）のような数える言葉を、助数詞といいます。',
+      cards: [['1個', '한 개'], ['2人', '두 명'], ['3杯', '세 잔'], ['4本', '네 병']],
+      specs: () => spaced(countSpecs(
+        shuffle([1, 2, 3, 4, 1, 2, 3, 4, ...sample(range(5, 10), 2)]),
+        ['ko', 'ko', 'ko', 'unit', 'unit', 'ja', 'ja', 'listen', 'listen', 'listen'],
+        true,
+      )),
+    },
+    {
+      level: 4, name: 'いち、に、さん', sample: '일 이 삼',
+      note: '「いち、に、さん」にあたる数え方です。韓国語の漢数詞といいます。',
+      cards: cardsOf(range(1, 10), String, sinoWord),
+      specs: () => halfListening(numberSpecs('sino', range(1, 10))),
+    },
+    {
+      level: 5, name: '11から99まで', sample: '십일, 이십',
+      note: '10は십です。20は「2と10」で이십、35は「3と10と5」で삼십오のように組み合わせます。',
+      cards: cardsOf([11, 20, 35, 99], String, sinoWord),
+      specs: () => halfListening(numberSpecs('sino', [...sample(range(11, 19), 2), ...twoDigits(3, 5)])),
+    },
+    {
+      level: 6, name: '値段', sample: '천 원',
+      note: '値段は「いち、に、さん」の数え方で言います。百は백、千は천、원はウォンです。100や1,000は、1をつけずに言います。',
+      cards: cardsOf([100, 500, 1000, 3500], n => `${fmt(n)}ウォン`, priceWord),
+      specs: () => halfListening(levelSixSpecs()),
+    },
+    {
+      level: 7, name: '日付', sample: '삼월 십오일',
+      note: '日付も「いち、に、さん」の数え方です。월は月、일は日です。6月と10月だけ形が変わります。',
+      cards: [['3月', monthWord(3)], ['6月', monthWord(6)], ['10月', monthWord(10)], ['15日', dayWord(15)]],
+      specs: () => halfListening(levelSevenSpecs()),
+    },
+    {
+      level: 8, name: '99まで数える', sample: '스물, 서른',
+      note: '「ひとつ、ふたつ」の数え方で、11から99までを覚えます。20から90は、それぞれ別の言葉です。20の前で数えるときは스물が스무に変わります。',
+      cards: [...cardsOf([11], String, nativeWord), ...cardsOf(range(20, 90, 10), String, nativeWord)],
+      specs: () => shuffle([
+        ...halfListening(numberSpecs('native', [...sample(range(11, 19), 2), ...twoDigits(3, 2)])),
+        ...countSpecs([20, ...twoDigits(0, 2)], ['ko', 'ko', 'ja']),
+      ]),
+    },
+    {
+      level: 9, name: '大きい値段', sample: '만 원',
+      note: '1万は、1をつけずに만と言います。2万は이만、2万5千は이만 오천です。',
+      cards: cardsOf([10000, 25000, 15000], n => `${fmt(n)}ウォン`, priceWord),
+      hero: cardsOf([10000, 20000, 30000], n => `${n / 10000}万`, sinoWord),
+      specs: () => halfListening(levelNineSpecs()),
+    },
+    {
+      level: 10, name: '使い分け', sample: '세 개, 삼월',
+      note: '個数は「ひとつ」の数え方、値段と日付は「いち」の数え方です。場面で言い分けます。',
+      cards: [['3個', '세 개'], ['3,000ウォン', priceWord(3000)], ['3月', monthWord(3)]],
+      specs: levelTenSpecs,
+    },
+  ];
+
+  const LEVEL_COUNT = LESSONS.filter(lesson => lesson.level).length;
+  LESSONS.forEach(lesson => { lesson.id = `lv${lesson.level}`; });
+
+  const lessonById = id => LESSONS.find(lesson => lesson.id === id);
+  const lessonTitle = lesson => `Lv.${lesson.level} ${lesson.name}`;
+
+  /* ━━ 7. 音声（Web Speech API） ━━ */
 
   const speech = (() => {
     const synth = window.speechSynthesis || null;
@@ -1358,27 +1431,23 @@
     return { speak, stop, prime, refresh, supported: Boolean(synth), hasVoice: () => Boolean(voice) };
   })();
 
-  /* ━━ 7. 保存（localStorage） ━━
+  /* ━━ 8. 保存（localStorage） ━━
      ブラウザの中の小さな保存場所。使えない環境でも、その場では普通に遊べるようにする。 */
 
   const STORE_KEY = 'korean-number-quiz';
   const HISTORY_SIZE = 30;
-  const PASS_SCORE = 8;        // 10問中これだけ正解すると次のレベルへ
   const ATTACK_SECONDS = 60;
   const READ_DELAY = 420;      // 答えてから単語を読み上げるまでの時間（ミリ秒）
-  const MODE_NAME = {
-    read: '読み方', listen: '聞き取り', attack: 'タイムアタック',
-    counter: '助数詞', konbini: 'コンビニ', review: '復習',
-  };
-  const SYS_LABEL = { native: '固有数詞', sino: '漢数詞', mix: '場面ミックス' };
+  const MODE_NAME = { attack: 'タイムアタック', review: '復習' };
+  // レベル制にする前の記録の表示名。記録は残すので読めるようにしておく
+  const OLD_MODE_NAME = { read: '読み方', listen: '聞き取り', attack: 'タイムアタック', counter: '助数詞', konbini: 'コンビニ', review: '復習' };
+  const OLD_SYS_NAME = { native: '固有数詞', sino: '漢数詞', mix: '場面ミックス' };
 
   const store = (() => {
     const fresh = () => ({
       review: {},
-      sys: 'native',
-      level: 1,
       sound: true,
-      unlocked: { native: 1, sino: 1, mix: 1 },
+      course: { cleared: 0 },   // cleared：合格したレベルの数。レベルは順に開く
       best: {},
       history: [],
       streak: { days: 0, best: 0, last: '' },
@@ -1386,7 +1455,9 @@
     });
     const isRecord = value => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
     const count = value => (Number.isFinite(value) && value >= 0 ? value : 0);
-    const isEntry = entry => isRecord(entry) && MODE_NAME[entry.mode] && SYS_LABEL[entry.sys] && [1, 2, 3].includes(entry.level)
+    const isOldRound = ({ mode, sys, level }) => Boolean(OLD_MODE_NAME[mode] && OLD_SYS_NAME[sys]) && [1, 2, 3].includes(level);
+    const isRound = ({ mode, sys, level }) => !sys && (mode === 'lesson' ? Number.isInteger(level) && level >= 1 && level <= LEVEL_COUNT : Boolean(MODE_NAME[mode]));
+    const isEntry = entry => isRecord(entry) && (isRound(entry) || isOldRound(entry))
       && [entry.score, entry.at, entry.correct, entry.total].every(Number.isFinite);
 
     // 保存データの形が想定と違う項目は捨てて、その項目だけ最初の状態に戻す
@@ -1395,18 +1466,15 @@
       let saved = null;
       try { saved = JSON.parse(localStorage.getItem(STORE_KEY)); } catch { /* 読めないときは最初の状態で始める */ }
       if (!isRecord(saved)) return data;
-      data.sys = saved.sys;
-      data.level = saved.level;
       if (saved.sound === false) data.sound = false;
       if (isRecord(saved.review)) data.review = saved.review;
       if (isRecord(saved.best)) {
         data.best = Object.fromEntries(Object.entries(saved.best).filter(([, entry]) => isEntry(entry)));
       }
       if (Array.isArray(saved.history)) data.history = saved.history.filter(isEntry).slice(0, HISTORY_SIZE);
-      if (isRecord(saved.unlocked)) {
-        for (const key of Object.keys(data.unlocked)) {
-          if ([1, 2, 3].includes(saved.unlocked[key])) data.unlocked[key] = saved.unlocked[key];
-        }
+      if (isRecord(saved.course)) {
+        const { cleared } = saved.course;
+        if (Number.isInteger(cleared) && cleared >= 0 && cleared <= LEVEL_COUNT) data.course.cleared = cleared;
       }
       if (isRecord(saved.streak)) {
         data.streak = { days: count(saved.streak.days), best: count(saved.streak.best), last: String(saved.streak.last || '') };
@@ -1482,17 +1550,31 @@
   // 連続で正解するほど1問の点が増える（200点で頭打ち）
   const pointsFor = combo => 100 + 10 * Math.min(combo - 1, 10);
 
-  function bestKey({ mode, sys, level }) {
+  function bestKey({ mode, lesson }) {
     if (mode === 'review') return null;
-    if (mode === 'konbini') return 'konbini';
-    if (mode === 'counter') return `counter:${level}`;
-    return `${mode}:${sys}:${level}`;
+    return lesson ? lesson.id : mode;
   }
 
   function roundLabel({ mode, sys, level }) {
-    if (mode === 'review' || mode === 'konbini') return MODE_NAME[mode];
-    if (mode === 'counter') return `${MODE_NAME.counter} Lv.${level}`;
-    return `${MODE_NAME[mode]} ${SYS_LABEL[sys]} Lv.${level}`;
+    if (sys) {
+      if (mode === 'review' || mode === 'konbini') return OLD_MODE_NAME[mode];
+      if (mode === 'counter') return `${OLD_MODE_NAME.counter} Lv.${level}`;
+      return `${OLD_MODE_NAME[mode]} ${OLD_SYS_NAME[sys]} Lv.${level}`;
+    }
+    return mode === 'lesson' ? lessonTitle(lessonById(`lv${level}`)) : MODE_NAME[mode];
+  }
+
+  const course = () => store.data.course;
+  const isOpen = lesson => lesson.level <= course().cleared + 1;
+  const isPassed = lesson => lesson.level <= course().cleared;
+
+  // 続きから始める場所
+  const nextLesson = () => LESSONS.find(lesson => lesson.level === Math.min(course().cleared + 1, LEVEL_COUNT));
+
+  // タイムアタックは開いたレベルから出す。音を待つ時間がないので読む問題だけ
+  function attackSpecs() {
+    const specs = LESSONS.filter(isOpen).flatMap(lesson => lesson.specs());
+    return shuffle(specs.map(({ listen, ...spec }) => spec));
   }
 
   /* ━━ 効果音（Web Audio API） ━━
@@ -1547,28 +1629,10 @@
     return { play, draw };
   })();
 
-  /* ━━ 8. 画面 ━━ */
-
-  const SYSTEMS = {
-    native: {
-      note: '「ひとつ、ふたつ」にあたる数え方。物や人の数に使います。',
-      hero: [['1', '하나'], ['2', '둘'], ['3', '셋']],
-      levels: ['1〜10', '2桁', 'ミックス'],
-    },
-    sino: {
-      note: '「いち、に、さん」にあたる数え方。値段や日付に使います。',
-      hero: [['1', '일'], ['2', '이'], ['3', '삼']],
-      levels: ['1〜10', '2桁', '百・千・万も'],
-    },
-    mix: {
-      note: '個数は固有数詞、値段と日付は漢数詞。場面に合う言い方を選びます。',
-      hero: [['3個', '세 개'], ['3月', '삼월'], ['1,000ウォン', '천 원']],
-      levels: ['小さい数', '大きい数', 'ミックス'],
-    },
-  };
+  /* ━━ 9. 画面 ━━ */
 
   const $ = id => document.getElementById(id);
-  const screens = { start: $('start'), quiz: $('quiz'), result: $('result'), records: $('records') };
+  const screens = { start: $('start'), lesson: $('lesson'), quiz: $('quiz'), result: $('result'), records: $('records') };
   const options = [...document.querySelectorAll('.option')];
   const calmMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const el = {
@@ -1579,9 +1643,8 @@
   };
 
   cleanReview();
-  let sys = SYSTEMS[store.data.sys] ? store.data.sys : 'native';
-  let level = [1, 2, 3].includes(store.data.level) ? Math.min(store.data.level, store.data.unlocked[sys]) : 1;
   let round = null;
+  let openedLesson = null;
 
   function show(name) {
     for (const [key, screen] of Object.entries(screens)) screen.hidden = key !== name;
@@ -1596,35 +1659,55 @@
     return node;
   }
 
+  // 語が長いレベルは、見出しの文字を小さくして折り返しを防ぐ
+  const LONG_HERO = 5;
+
   function renderHero() {
     const hero = $('hero');
-    if (hero.dataset.sys === sys) return;
-    hero.dataset.sys = sys;
-    hero.replaceChildren(...SYSTEMS[sys].hero.map(([label, word]) => {
+    const lesson = nextLesson();
+    const words = lesson.hero || lesson.cards.slice(0, 3);
+    hero.toggleAttribute('data-long', words.reduce((sum, [, word]) => sum + textWidth(word), 0) > LONG_HERO);
+    hero.replaceChildren(...words.map(([label, word]) => {
       const box = make('div', 'hero-word');
       box.append(make('span', 'digit', label), make('span', '', word, 'ko'));
       return box;
     }));
   }
 
-  function renderPickers() {
-    document.querySelectorAll('#sys [data-sys]').forEach(button => {
-      button.setAttribute('aria-pressed', String(button.dataset.sys === sys));
-    });
-    $('sys-note').textContent = SYSTEMS[sys].note;
-    const unlocked = store.data.unlocked[sys];
-    document.querySelectorAll('[data-level]').forEach((button, i) => {
-      const locked = i + 1 > unlocked;
-      button.disabled = locked;
-      button.setAttribute('aria-pressed', String(i + 1 === level));
-      button.replaceChildren(
-        make('b', '', `Lv.${i + 1}`),
-        make('span', '', locked ? `${PASS_SCORE}問で解放` : SYSTEMS[sys].levels[i]),
-      );
-    });
-    const levelNote = $('level-note');
-    levelNote.hidden = unlocked === 3;
-    levelNote.textContent = `読み方か聞き取りで10問中${PASS_SCORE}問正解すると、次のレベルが開きます。`;
+  function chevron() {
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('class', 'icon chevron');
+    const shape = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    shape.setAttribute('href', '#i-chevron');
+    icon.append(shape);
+    return icon;
+  }
+
+  function lessonRow(lesson, current) {
+    const passed = isPassed(lesson);
+    const row = make('button', lesson === current ? 'mode now' : 'mode');
+    row.dataset.lesson = lesson.id;
+    row.disabled = !isOpen(lesson);
+    const text = make('span', 'mode-text');
+    text.append(make('b', '', lessonTitle(lesson)), make('span', 'mode-sub', lesson.sample, 'ko'));
+    row.append(make('span', `mode-icon level-icon${passed ? ' passed' : ''}`, passed ? '✓' : String(lesson.level)), text, chevron());
+    return row;
+  }
+
+  function renderCourse() {
+    const current = nextLesson();
+    const allPassed = isPassed(current);
+    $('continue-name').textContent = `${allPassed ? 'もう一度' : '続きから'}：${lessonTitle(current)}`;
+    $('continue-sub').textContent = allPassed ? '全レベル合格です。おめでとうございます' : `10問中${PASS_SCORE}問正解で次のレベルへ`;
+    $('lessons').replaceChildren(...LESSONS.map(lesson => lessonRow(lesson, current)));
+  }
+
+  function openLesson(lesson) {
+    openedLesson = lesson;
+    $('lesson-name').textContent = lessonTitle(lesson);
+    $('lesson-note').textContent = lesson.note;
+    $('lesson-sub').textContent = '読む問題と聞く問題で10問';
+    show('lesson');
   }
 
   function renderReview() {
@@ -1644,7 +1727,7 @@
 
   function renderHome() {
     renderHero();
-    renderPickers();
+    renderCourse();
     renderReview();
     renderHomeRecord();
     renderSoundSetting();
@@ -1689,7 +1772,7 @@
   function disarmErase() {
     const erase = $('erase');
     delete erase.dataset.armed;
-    erase.textContent = '記録をすべて消す';
+    erase.textContent = '記録とレベルをすべて消す';
   }
 
   function renderReceipt({ lines, total }, answered) {
@@ -1733,11 +1816,11 @@
     if (left <= 0) showResult();
   }
 
-  function startRound(specs, mode, roundSys = sys, roundLevel = level) {
+  function startRound(specs, mode, lesson = null) {
     stopTimers();
     const timed = mode === 'attack';
     round = {
-      specs, mode, timed, sys: roundSys, level: roundLevel,
+      specs, mode, timed, lesson,
       index: 0, results: [], answered: false, q: null,
       combo: 0, bestCombo: 0, score: 0, deadline: 0, ticker: 0, autoNext: 0, readTimer: 0,
     };
@@ -1753,6 +1836,8 @@
       round.ticker = setInterval(tick, 200);
     }
   }
+
+  const playLesson = lesson => startRound(lesson.specs(), 'lesson', lesson);
 
   function renderCombo() {
     el.combo.hidden = round.combo < 2;
@@ -1920,21 +2005,20 @@
     clearTimeout(round.readTimer);
     speech.stop();
     round.index += 1;
-    if (round.timed && round.index >= round.specs.length) {
-      round.specs.push(...roundSpecs('attack', round.sys, round.level));
-    }
+    if (round.timed && round.index >= round.specs.length) round.specs.push(...attackSpecs());
     if (round.index < round.specs.length) showQuestion();
     else showResult();
   }
 
   // 1回分の結果を保存し、レベルの解放と自己ベストを判定する
   function recordRound() {
-    const { mode, sys: roundSys, level: roundLevel, results, score, bestCombo } = round;
+    const { mode, lesson, results, score, bestCombo } = round;
     const key = bestKey(round);
-    const outcome = { best: 0, newBest: false, unlockedLevel: 0 };
+    const outcome = { best: 0, newBest: false, passed: false, opened: null, allPassed: false };
     if (results.length) {
       const correct = results.filter(r => r.correct).length;
-      const entry = { at: Date.now(), mode, sys: roundSys, level: roundLevel, correct, total: results.length, score, combo: bestCombo };
+      const entry = { at: Date.now(), mode, correct, total: results.length, score, combo: bestCombo };
+      if (lesson) entry.level = lesson.level;
       store.data.history = [entry, ...store.data.history].slice(0, HISTORY_SIZE);
 
       if (key) {
@@ -1944,15 +2028,11 @@
         outcome.best = store.data.best[key].score;
       }
 
-      const { unlocked } = store.data;
-      const passed = (mode === 'read' || mode === 'listen') && results.length === ROUND_SIZE && correct >= PASS_SCORE;
-      if (passed && roundLevel === unlocked[roundSys] && roundLevel < 3) {
-        unlocked[roundSys] = roundLevel + 1;
-        outcome.unlockedLevel = roundLevel + 1;
-        if (roundSys === sys) {
-          level = roundLevel + 1;
-          store.data.level = level;
-        }
+      outcome.passed = Boolean(lesson) && results.length === ROUND_SIZE && correct >= PASS_SCORE;
+      if (outcome.passed && lesson.level === course().cleared + 1) {
+        course().cleared = lesson.level;
+        outcome.opened = LESSONS.find(other => other.level === lesson.level + 1) || null;
+        outcome.allPassed = lesson.level === LEVEL_COUNT;
       }
       store.save();
     } else if (key && store.data.best[key]) {
@@ -1971,7 +2051,7 @@
   function showResult() {
     stopTimers();
     speech.stop();
-    const { results, mode, timed, score, bestCombo } = round;
+    const { results, mode, lesson, timed, score, bestCombo } = round;
     const outcome = recordRound();
     const wrong = results.filter(r => !r.correct).map(r => r.q.spec);
     const right = results.length - wrong.length;
@@ -1983,10 +2063,14 @@
     const notes = [];
     if (isReview) notes.push(remaining ? `あと${remaining}問残っています。正解した問題は復習リストから消えました。` : '復習リストが空になりました。');
     else if (timed) notes.push(`${ATTACK_SECONDS}秒で${right}問正解しました。`);
-    else if (wrong.length) notes.push('間違えた問題は復習リストに保存しました。');
-    else notes.push('全問正解です。');
+    else {
+      if (outcome.passed) notes.push('合格です。');
+      else notes.push(`${PASS_SCORE}問正解で合格です。あと${PASS_SCORE - right}問でした。`);
+      notes.push(wrong.length ? '間違えた問題は復習リストに保存しました。' : '全問正解です。');
+    }
     if (outcome.newBest) notes.push('自己ベストを更新しました。');
-    if (outcome.unlockedLevel) notes.push(`Lv.${outcome.unlockedLevel} に進めるようになりました。`);
+    if (outcome.opened) notes.push(`${lessonTitle(outcome.opened)} が開きました。`);
+    if (outcome.allPassed) notes.push('全レベル合格です。おめでとうございます。');
     $('score-note').textContent = notes.join('');
 
     const cheer = $('cheer');
@@ -2011,6 +2095,14 @@
       return scrap;
     }));
 
+    const goNext = $('go-next');
+    const onward = outcome.opened ? nextLesson() : null;
+    goNext.hidden = !onward;
+    if (onward) {
+      goNext.textContent = `次へ：${lessonTitle(onward)}`;
+      goNext.onclick = () => openLesson(onward);
+    }
+
     const review = $('review');
     review.hidden = remaining === 0;
     review.textContent = `${isReview ? '続けて復習する' : '間違えた問題を復習する'}（${Math.min(remaining, ROUND_SIZE)}問）`;
@@ -2018,10 +2110,12 @@
 
     const retry = $('retry');
     retry.hidden = isReview;
-    retry.onclick = () => startRound(roundSpecs(mode, round.sys, round.level), mode, round.sys, round.level);
+    retry.onclick = () => (timed ? startRound(attackSpecs(), 'attack') : playLesson(lesson));
 
     show('result');
-    const firstButton = remaining ? review : isReview ? $('back') : retry;
+    const buttons = [goNext, review, retry, $('back')];
+    const firstButton = buttons.find(button => !button.hidden);
+    buttons.forEach(button => button.classList.toggle('main', button === firstButton));
     if (timed) {
       // 時間切れの瞬間に連打していても、結果画面のボタンを誤って押さないように
       const actions = $('actions');
@@ -2049,30 +2143,17 @@
     show('records');
   }
 
-  /* ━━ 9. 操作 ━━ */
+  /* ━━ 10. 操作 ━━ */
 
-  document.querySelectorAll('#sys [data-sys]').forEach(button => {
-    button.addEventListener('click', () => {
-      sys = button.dataset.sys;
-      level = Math.min(level, store.data.unlocked[sys]);
-      store.data.sys = sys;
-      store.data.level = level;
-      store.save();
-      renderHero();
-      renderPickers();
-    });
+  $('continue').addEventListener('click', () => openLesson(nextLesson()));
+  $('lessons').addEventListener('click', event => {
+    const row = event.target.closest('[data-lesson]');
+    if (row) openLesson(lessonById(row.dataset.lesson));
   });
-  document.querySelectorAll('[data-level]').forEach(button => {
-    button.addEventListener('click', () => {
-      level = Number(button.dataset.level);
-      store.data.level = level;
-      store.save();
-      renderPickers();
-    });
-  });
-  document.querySelectorAll('[data-mode]').forEach(button => {
-    button.addEventListener('click', () => startRound(roundSpecs(button.dataset.mode, sys, level), button.dataset.mode));
-  });
+  $('lesson-start').addEventListener('click', () => playLesson(openedLesson));
+  $('lesson-back').addEventListener('click', goHome);
+  $('review-mode').addEventListener('click', () => startRound(reviewSpecs(), 'review'));
+  $('attack-mode').addEventListener('click', () => startRound(attackSpecs(), 'attack'));
   options.forEach((button, i) => button.addEventListener('click', () => answer(i)));
   $('sound-toggle').addEventListener('click', () => {
     store.data.sound = !store.data.sound;
@@ -2103,8 +2184,6 @@
     store.reset();
     store.data.sound = soundSetting;
     store.save();
-    sys = 'native';
-    level = 1;
     disarmErase();
     renderRecords();
   });
@@ -2139,7 +2218,7 @@
     window.speechSynthesis.addEventListener('voiceschanged', updateVoiceNote);
   }
 
-  /* ━━ 10. アプリとして使う（PWA） ━━
+  /* ━━ 11. アプリとして使う（PWA） ━━
      Service Worker はファイルを端末に保存し、通信がなくても開けるようにする裏方の仕組み。
      https で公開した本来のページでだけ動かす。 */
 
@@ -2180,8 +2259,12 @@
   // 自動テスト用の入口。テストのときだけ外から渡される
   if (window.__QUIZ_HOOK__) {
     window.__QUIZ_HOOK__({
-      build, roundSpecs, store, sound, ITEMS, GOODS, PHRASES, ROUND_BIG, DAYS_IN_MONTH, range,
-      playSpec: spec => startRound([spec], 'read'),
+      build, store, sound, LESSONS, attackSpecs, nextLesson, reviewSpecs,
+      ITEMS, GOODS, PHRASES, ROUND_BIG, DAYS_IN_MONTH, range,
+      playSpec: spec => startRound([spec], 'attempt'),
+      playSpecs: specs => startRound(specs, 'attempt'),
+      goHome,
+      playLesson: id => playLesson(lessonById(id)),
       rightIndex: () => round.q.choices.findIndex(c => c.right),
       currentKey: () => round.q.key,
       currentRound: () => round,
