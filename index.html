@@ -1633,8 +1633,8 @@
 
   const speech = (() => {
     const synth = window.speechSynthesis || null;
-    // iPhoneは同じ数値でも遅くなりにくいので、ゆっくりを強めにする
-    const SLOW_RATE = /iPhone|iPad/.test(navigator.userAgent) ? .3 : .6;
+    // iPhoneの韓国語の声は速さの幅が狭い。実機で 0.9 が0.95秒、0.6 が1.03秒、0.1 が1.44秒だったので、いちばん遅くする
+    const SLOW_RATE = /iPhone|iPad/.test(navigator.userAgent) ? .1 : .6;
     let voice = null;
     let current = null;
     let watchdog = 0;
