@@ -135,12 +135,31 @@
   h1, h2, h3, p, ul { margin: 0; padding: 0; }
   p { word-break: auto-phrase; }
   ul { list-style: none; }
+  /* 画面が広がる動きで、横にはみ出さないようにする */
+  .frame { height: 100%; overflow-x: clip; }
   main {
+    position: relative;
+    z-index: 1;
     padding-top: var(--band);
     height: 100%;
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
   }
+  main[data-moving] { background: var(--bg); }
+  /* 切り替わるときに後ろで消えていく、前の画面の写し */
+  .leaving {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--band));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    background: var(--bg);
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .leaving * { animation: none !important; transition: none !important; }
   button {
     appearance: none;
     border: 0;
@@ -708,6 +727,7 @@
   <symbol id="i-install" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
   <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
 </svg>
+<div class="frame">
 <main>
   <section id="welcome" class="lesson" hidden>
     <header class="start-head">
@@ -744,7 +764,7 @@
       <button id="test-quit" class="quit">やめる</button>
       <span id="test-step"></span>
     </div>
-    <div class="test-card">
+    <div id="test-card" class="test-card">
       <p id="test-prompt" class="note"></p>
       <p id="test-word" class="test-word"></p>
       <p id="test-gloss" class="gloss" hidden></p>
@@ -914,6 +934,7 @@
     <button id="erase" class="action">記録とレベルをすべて消す</button>
   </section>
 </main>
+</div>
 <div id="burst" class="burst" aria-hidden="true"></div>
 
 <script>
@@ -1882,9 +1903,82 @@
   let round = null;
   let openedLesson = null;
 
+  /* 画面の動き：進むと次の画面が奥から現れ、戻ると今の画面が奥へ下がる。
+     画面そのものはすぐ切り替えて押せる状態にし、前の画面の写しを後ろに残して消していく */
+  const MOVE_TIME = 480;
+  const MOVE_EASE = 'cubic-bezier(.22, .8, .24, 1)';
+  const main = document.querySelector('main');
+  let opened = false;
+  let moving = null;
+
+  function copyOf(screen, fixed) {
+    const page = screen.cloneNode(true);
+    if (fixed) page.querySelectorAll(fixed).forEach(node => { node.style.visibility = 'hidden'; });
+    page.removeAttribute('id');
+    page.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+    page.style.marginTop = `${-window.scrollY}px`;
+    const copy = make('div', 'leaving');
+    copy.setAttribute('aria-hidden', 'true');
+    copy.inert = true;
+    copy.append(page);
+    document.body.append(copy);
+    return copy;
+  }
+
+  function stopMove() {
+    if (!moving) return;
+    moving.animations.forEach(animation => animation.cancel());
+    moving.copy.remove();
+    moving.parts.forEach(part => { part.style.transformOrigin = ''; });
+    delete main.dataset.moving;
+    moving = null;
+  }
+
+  function playMove(copy, parts, back) {
+    const [enter, leave] = back ? [1.05, .93] : [.93, 1.05];
+    const animations = parts.map(part => part.animate(
+      [{ opacity: 0, transform: `scale(${enter})` }, { opacity: 1, transform: 'none' }],
+      { duration: MOVE_TIME, easing: MOVE_EASE },
+    ));
+    animations.push(copy.animate(
+      [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `scale(${leave})` }],
+      { duration: MOVE_TIME * .7, easing: MOVE_EASE, fill: 'forwards' },
+    ));
+    const move = { copy, parts, animations };
+    moving = move;
+    Promise.all(animations.map(animation => animation.finished))
+      .then(() => { if (moving === move) stopMove(); })
+      .catch(() => { /* 途中で次の画面へ移ったときは、そちらに任せる */ });
+  }
+
   function show(name) {
+    const from = Object.values(screens).find(screen => !screen.hidden);
+    const moves = opened && from && from !== screens[name] && !calmMotion.matches;
+    if (moves) stopMove();
+    const copy = moves ? copyOf(from) : null;
     for (const [key, screen] of Object.entries(screens)) screen.hidden = key !== name;
     window.scrollTo(0, 0);
+    if (moves) {
+      main.dataset.moving = '';
+      playMove(copy, [main], name === 'start' || name === 'welcome');
+    }
+  }
+
+  // 問題の送り：fixed の部分は動かさず、parts をひとかたまりとして同じ動きをさせる
+  function changeInside(screen, fixed, parts, render) {
+    if (calmMotion.matches) {
+      render();
+      return;
+    }
+    stopMove();
+    const copy = copyOf(screen, fixed);
+    render();
+    const boxes = parts.map(part => part.getBoundingClientRect());
+    const x = (Math.min(...boxes.map(box => box.left)) + Math.max(...boxes.map(box => box.right))) / 2;
+    const y = (Math.min(...boxes.map(box => box.top)) + Math.max(...boxes.map(box => box.bottom))) / 2;
+    copy.style.transformOrigin = `${x}px ${y}px`;
+    parts.forEach((part, i) => { part.style.transformOrigin = `${x - boxes[i].left}px ${y - boxes[i].top}px`; });
+    playMove(copy, parts, false);
   }
 
   function make(tag, className, text, lang) {
@@ -2018,7 +2112,7 @@
       }
       test.specs = testSpecs(test.level);
     }
-    showTestQuestion();
+    changeInside(screens.placement, '.test-top, #test-skip', [$('test-card'), $('test-choices')], showTestQuestion);
   }
 
   function finishTest(start) {
@@ -2341,8 +2435,11 @@
     speech.stop();
     round.index += 1;
     if (round.timed && round.index >= round.specs.length) round.specs.push(...attackSpecs());
-    if (round.index < round.specs.length) showQuestion();
-    else showResult();
+    if (round.index < round.specs.length) {
+      changeInside(screens.quiz, '.bar', [el.question, options[0].parentElement, el.next], showQuestion);
+    } else {
+      showResult();
+    }
   }
 
   // 1回分の結果を保存し、レベルの解放と自己ベストを判定する
@@ -2581,6 +2678,7 @@
   });
 
   goHome();
+  opened = true;
   // 音声の一覧は遅れて届くことがあるので、少し待ってから案内を判断する
   setTimeout(updateVoiceNote, 1500);
   if (speech.supported && window.speechSynthesis.addEventListener) {
