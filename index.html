@@ -54,10 +54,18 @@
     --ko: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Noto Sans CJK KR", "Malgun Gothic", sans-serif;
     --display: "Jua Numbers", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Apple SD Gothic Neo", "Noto Sans JP", "Noto Sans KR", "Yu Gothic UI", "Malgun Gothic", sans-serif;
     --radius: 12px;
-    --band: 5px;
+    --band-gap: 0px;
+    --band-line: 5px;
+    --band: calc(var(--band-gap) + var(--band-line));
     color-scheme: light;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  /* iPhoneは画面の上端近くをぼかすので、縦向きのときは帯をその下まで下げる */
+  @supports (-webkit-touch-callout: none) {
+    @media (orientation: portrait) {
+      :root { --band-gap: 18px; }
+    }
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -123,14 +131,14 @@
     line-height: 1.6;
   }
   [lang="ko"] { font-family: var(--ko); }
-  /* 色동の帯：どの画面でも上端に細く出す */
+  /* 色동の帯：どの画面でも上に細く出す。帯より上は背景色で埋め、スクロールした文字を隠す */
   body::before {
     content: "";
     position: fixed;
     inset: 0 0 auto;
     z-index: 10;
     height: calc(env(safe-area-inset-top, 0px) + var(--band));
-    background: repeating-linear-gradient(90deg, var(--red) 0 2rem, var(--yellow) 2rem 4rem, var(--green) 4rem 6rem, var(--blue) 6rem 8rem, var(--purple) 8rem 10rem);
+    background: repeating-linear-gradient(90deg, var(--red) 0 2rem, var(--yellow) 2rem 4rem, var(--green) 4rem 6rem, var(--blue) 6rem 8rem, var(--purple) 8rem 10rem) bottom / 100% var(--band-line) no-repeat var(--bg);
   }
   h1, h2, h3, p, ul { margin: 0; padding: 0; }
   p { word-break: auto-phrase; }
@@ -575,6 +583,16 @@
   .next:disabled { visibility: hidden; }
   .action { width: 100%; background: var(--surface); border: 1.5px solid var(--line); }
   .action.main { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .export-text {
+    width: 100%;
+    height: 10rem;
+    padding: 12px;
+    background: var(--surface);
+    color: inherit;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius);
+    font: 1rem/1.5 var(--sans);
+  }
 
   /* ── 結果画面・記録画面 ── */
   .result, .records {
@@ -835,7 +853,11 @@
         </button>
         <button id="sound-toggle" class="mode" aria-pressed="true">
           <span class="mode-icon t-green" lang="ko">소</span>
-          <span class="mode-text"><b>効果音と読み上げ</b><span id="sound-sub" class="mode-sub"></span></span>
+          <span class="mode-text"><b>効果音</b><span id="sound-sub" class="mode-sub"></span></span>
+        </button>
+        <button id="speak-toggle" class="mode" aria-pressed="true">
+          <span class="mode-icon t-blue" lang="ko">읽</span>
+          <span class="mode-text"><b>自動の読み上げ</b><span id="speak-sub" class="mode-sub"></span></span>
         </button>
         <button id="install" class="mode" hidden>
           <span class="mode-icon"><svg class="icon"><use href="#i-install"/></svg></span>
@@ -931,6 +953,8 @@
         <ul id="history-list" class="rows"></ul>
       </div>
     </div>
+    <button id="export" class="action">学習データをコピー</button>
+    <textarea id="export-text" class="export-text" aria-label="学習データ" readonly hidden></textarea>
     <button id="erase" class="action">記録とレベルをすべて消す</button>
   </section>
 </main>
@@ -1609,6 +1633,8 @@
 
   const speech = (() => {
     const synth = window.speechSynthesis || null;
+    // iPhoneは同じ数値でも遅くなりにくいので、ゆっくりを強めにする
+    const SLOW_RATE = /iPhone|iPad/.test(navigator.userAgent) ? .3 : .6;
     let voice = null;
     let current = null;
     let watchdog = 0;
@@ -1641,7 +1667,7 @@
       if (synth.paused) synth.resume();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'ko-KR';
-      utterance.rate = slow ? .6 : .9;
+      utterance.rate = slow ? SLOW_RATE : .9;
       if (voice) utterance.voice = voice;
       const mine = fn => (...args) => { if (current === utterance && fn) fn(...args); };
       utterance.onstart = mine(() => { clearTimeout(watchdog); if (onStart) onStart(); });
@@ -1680,6 +1706,7 @@
     const fresh = () => ({
       review: {},
       sound: true,
+      speak: true,
       // placed：始める場所を決めたか。cleared：合格したレベルの数（レベルは順に開く）
       // shops：コンビニ回ごとの最高正解数。遊んだ回、飛ばした回だけが入る
       course: { placed: false, cleared: 0, shops: {} },
@@ -1708,6 +1735,8 @@
       try { saved = JSON.parse(localStorage.getItem(STORE_KEY)); } catch { /* 読めないときは最初の状態で始める */ }
       if (!isRecord(saved)) return data;
       if (saved.sound === false) data.sound = false;
+      // 以前は効果音と読み上げが同じ設定だったので、読み上げの設定がなければ効果音に合わせる
+      data.speak = typeof saved.speak === 'boolean' ? saved.speak : data.sound;
       if (isRecord(saved.review)) data.review = saved.review;
       if (isRecord(saved.best)) {
         data.best = Object.fromEntries(Object.entries(saved.best).filter(([, entry]) => isEntry(entry)));
@@ -1838,6 +1867,23 @@
     const SCALE = [523, 587, 659, 784, 880, 1047, 1175, 1319]; // 5音音階。コンボで1段ずつ上がる
     let engine = null;
 
+    // iPhoneに音の扱いを伝える。ambient は「流れている音楽と重ねて鳴らす」。対応していない端末では何もしない
+    function setSession(type) {
+      try {
+        if (navigator.audioSession) navigator.audioSession.type = type;
+      } catch { /* 指定できなくても音は鳴らす */ }
+    }
+    setSession('ambient');
+
+    // iPhoneは別のアプリから戻ると音が出なくなることがあるので、次に鳴らすときに作り直す
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden || !engine || !navigator.audioSession) return;
+      const old = engine;
+      engine = null;
+      setSession('auto');
+      Promise.resolve().then(() => old.close()).catch(() => {}).then(() => setSession('ambient'));
+    });
+
     function tone(audio, { shape, from, to = from, at = 0, length, volume }) {
       const start = audio.currentTime + at;
       const osc = audio.createOscillator();
@@ -1873,7 +1919,10 @@
     function play(name, combo) {
       if (!AudioEngine || !store.data.sound) return;
       try {
-        if (!engine) engine = new AudioEngine();
+        if (!engine) {
+          setSession('ambient');
+          engine = new AudioEngine();
+        }
         if (engine.state !== 'running') Promise.resolve(engine.resume()).catch(() => {});
         draw[name](engine, combo);
       } catch { /* 音が出せなくてもクイズは続ける */ }
@@ -2146,8 +2195,11 @@
   }
 
   function renderSoundSetting() {
-    $('sound-toggle').setAttribute('aria-pressed', String(store.data.sound));
-    $('sound-sub').textContent = store.data.sound ? 'オン' : 'オフ';
+    const { sound: effects, speak } = store.data;
+    $('sound-toggle').setAttribute('aria-pressed', String(effects));
+    $('sound-sub').textContent = effects ? 'オン' : 'オフ';
+    $('speak-toggle').setAttribute('aria-pressed', String(speak));
+    $('speak-sub').textContent = speak ? 'オン' : 'オフ（ボタンを押すと読みます）';
   }
 
   function renderHomeRecord() {
@@ -2196,6 +2248,39 @@
     const bests = Object.values(best).sort((a, b) => b.score - a.score);
     fillRows($('best-list'), bests.map(entry => recordRow(entry, false)), 'まだ記録がありません。1回遊ぶとここに残ります。');
     fillRows($('history-list'), history.slice(0, 10).map(entry => recordRow(entry, true)), 'まだ記録がありません。');
+  }
+
+  // 苦手な問題を調べられるように、保存している学習の記録を文字にする
+  function studyText() {
+    const { course: progress, totals, streak, best, history, review } = store.data;
+    const missed = Object.values(review)
+      .sort((a, b) => b.misses - a.misses)
+      .map(({ spec, misses, at }) => {
+        const q = build(spec);
+        return { pair: q.pair, listen: q.listen, misses, at: new Date(at).toISOString().slice(0, 10) };
+      });
+    return JSON.stringify({ progress, totals, streak, best, history, missed });
+  }
+
+  async function copyStudyData() {
+    const button = $('export');
+    const box = $('export-text');
+    box.value = studyText();
+    try {
+      await navigator.clipboard.writeText(box.value);
+      button.textContent = 'コピーしました';
+      box.hidden = true;
+    } catch {
+      // コピーできない環境では、文字を選んで手で写せるようにする
+      button.textContent = '下の文字を全部選んでコピーしてください';
+      box.hidden = false;
+      box.select();
+    }
+  }
+
+  function resetExport() {
+    $('export').textContent = '学習データをコピー';
+    $('export-text').hidden = true;
   }
 
   function disarmErase() {
@@ -2365,7 +2450,7 @@
     el.next.disabled = true;
     el.next.textContent = '';
     options[0].focus({ preventScroll: true });
-    if (q.listen) playQuestion();
+    if (q.listen && store.data.speak) playQuestion();
   }
 
   function answer(i) {
@@ -2422,7 +2507,7 @@
     el.next.focus({ preventScroll: true });
     if (round.timed) {
       round.autoNext = setTimeout(advance, correct ? 500 : 1400);
-    } else if (store.data.sound) {
+    } else if (store.data.speak) {
       // 効果音が鳴り終わってから単語を読む
       speech.prime();
       round.readTimer = setTimeout(() => speech.speak(q.say), READ_DELAY);
@@ -2582,6 +2667,7 @@
 
   function openRecords() {
     disarmErase();
+    resetExport();
     renderRecords();
     show('records');
   }
@@ -2627,6 +2713,11 @@
     renderSoundSetting();
     sound.play('tap'); // オンにしたときだけ鳴る
   });
+  $('speak-toggle').addEventListener('click', () => {
+    store.data.speak = !store.data.speak;
+    store.save();
+    renderSoundSetting();
+  });
   // 選択肢は正解・不正解の音を鳴らすので、それ以外のボタンで「コツッ」と鳴らす。
   // 押した処理でボタンが無効になることがあるので、処理より先に判定する
   document.addEventListener('click', event => {
@@ -2639,6 +2730,7 @@
   $('back').addEventListener('click', goHome);
   $('records-open').addEventListener('click', openRecords);
   $('records-back').addEventListener('click', goHome);
+  $('export').addEventListener('click', copyStudyData);
   $('erase').addEventListener('click', () => {
     const erase = $('erase');
     if (erase.dataset.armed === undefined) {
@@ -2646,9 +2738,9 @@
       erase.textContent = 'もう一度押すと消します。元に戻せません';
       return;
     }
-    const soundSetting = store.data.sound;
+    const { sound: effects, speak } = store.data;
     store.reset();
-    store.data.sound = soundSetting;
+    Object.assign(store.data, { sound: effects, speak });
     store.save();
     disarmErase();
     renderRecords();
