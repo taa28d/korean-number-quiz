@@ -466,6 +466,17 @@
   .prompt { padding-inline: 2.5rem; color: var(--muted); font-size: 1.0625rem; font-weight: 700; line-height: 1.45; }
   .prompt.verdict { font-size: 1.375rem; line-height: 1.3; }
   .prompt.verdict [lang="ko"] { font-family: var(--display); }
+  /* 復習で足した問題の印 */
+  .why {
+    display: inline-block;
+    margin-inline-end: .5em;
+    padding: .05em .6em;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    font-size: .875rem;
+    vertical-align: .05em;
+  }
   [data-verdict="right"] .prompt { color: var(--good-text); }
   [data-verdict="wrong"] .prompt { color: var(--bad-text); }
   .stage {
@@ -1410,11 +1421,20 @@
     return shuffle([...months.map(x => [x, d]), ...days.map(x => [m, x])]);
   }
 
-  function choiceSet(right, wrongs, lang) {
+  // もう一方の数え方で言ってしまった選択肢の印。sys はその選択肢が使った数え方、n はその数
+  const slip = (text, sys, n) => ({ text, sys, n });
+  const leadOf = n => Number(String(n)[0]);
+
+  // slips：選んだら「数え方の取り違え」とわかる選択肢。復習で使い分けの問題を足すのに使う
+  function choiceSet(right, wrongs, lang, slips = []) {
     const picked = [...new Set(wrongs)].filter(text => text !== right).slice(0, 3);
+    const slipOf = text => slips.find(entry => entry.text === text);
     return shuffle([
       { text: right, lang, right: true },
-      ...picked.map(text => ({ text, lang, right: false })),
+      ...picked.map(text => {
+        const found = slipOf(text);
+        return { text, lang, right: false, ...(found && { mixed: { sys: found.sys, n: found.n } }) };
+      }),
     ]);
   }
 
@@ -1504,7 +1524,12 @@
       ...(early ? [] : [koOf(sinoWord(n))]),
       ...others.map(x => koOf(nativeBeforeUnit(x))),
     ];
-    return { ...base, prompt: '韓国語で言うと？', show: { text: ja, lang: 'ja' }, choices: choiceSet(word, wrongForms, 'ko') };
+    return {
+      ...base,
+      prompt: '韓国語で言うと？',
+      show: { text: ja, lang: 'ja' },
+      choices: choiceSet(word, wrongForms, 'ko', [slip(koOf(sinoWord(n)), 'sino', n)]),
+    };
   }
 
   function buildPrice({ n, listen, max }) {
@@ -1526,7 +1551,7 @@
       ...base,
       prompt: '値段の言い方は？',
       show: { text: ja, lang: 'ja' },
-      choices: choiceSet(word, [priceInNative(n), ...near.map(priceWord)], 'ko'),
+      choices: choiceSet(word, [priceInNative(n), ...near.map(priceWord)], 'ko', [slip(priceInNative(n), 'native', leadOf(n))]),
     };
   }
 
@@ -1546,12 +1571,18 @@
     if (listen) {
       return { ...base, prompt: '聞こえた日付はどれ？', choices: choiceSet(ja, near.map(([x, y]) => `${x}月${y}日`), 'ja') };
     }
+    const inNative = `${nativeBeforeUnit(m)} 월 ${nativeBeforeUnit(d)} 일`;
     const wrongForms = [
       ...(irregular ? [`${irregular} ${dayWord(d)}`] : []),
-      `${nativeBeforeUnit(m)} 월 ${nativeBeforeUnit(d)} 일`,
+      inNative,
       ...near.map(([x, y]) => dateWord(x, y)),
     ];
-    return { ...base, prompt: '日付の言い方は？', show: { text: ja, lang: 'ja' }, choices: choiceSet(word, wrongForms, 'ko') };
+    return {
+      ...base,
+      prompt: '日付の言い方は？',
+      show: { text: ja, lang: 'ja' },
+      choices: choiceSet(word, wrongForms, 'ko', [slip(inNative, 'native', d)]),
+    };
   }
 
   function buildTotal({ cart, listen, max }) {
@@ -1597,7 +1628,7 @@
         say(nativeWord(n)),
         ...(early ? [] : [say(sinoWord(n))]),
         ...wrong.map(x => say(nativeBeforeUnit(x))),
-      ], 'ko'),
+      ], 'ko', [slip(say(sinoWord(n)), 'sino', n)]),
     };
   }
 
@@ -1694,7 +1725,7 @@
         ...(plain === count ? [] : [say(plain)]),
         ...minutes.map(x => `${count} 시 ${minuteWord(x)}`),
         ...hours.map(x => say(nativeBeforeUnit(x))),
-      ], 'ko'),
+      ], 'ko', [slip(`${count} 시 ${nativeBeforeUnit(m)} 분`, 'native', m), slip(say(sinoWord(h)), 'sino', h)]),
     };
   }
 
@@ -1721,7 +1752,7 @@
         ...(plain === count ? [] : [`${plain} 살`]),
         `${sinoWord(n)} 살`,
         ...others.map(x => `${nativeBeforeUnit(x)} 살`),
-      ], 'ko'),
+      ], 'ko', [slip(`${sinoWord(n)} 살`, 'sino', n)]),
     };
   }
 
@@ -1736,26 +1767,26 @@
       const near = wrongNumbers('native', hour, range(1, 12));
       return {
         ko: hourWord(hour), ja: `${hour}時`,
-        slips: [`${sinoWord(hour)} 시`], wrongJa: near.map(x => `${x}時`),
+        slips: [slip(`${sinoWord(hour)} 시`, 'sino', hour)], wrongJa: near.map(x => `${x}時`),
       };
     }
     if (age) {
       return {
         ko: `${nativeBeforeUnit(age)} 살`, ja: `${age}歳`,
-        slips: [`${sinoWord(age)} 살`], wrongJa: wrongNumbers('native', age).map(x => `${x}歳`),
+        slips: [slip(`${sinoWord(age)} 살`, 'sino', age)], wrongJa: wrongNumbers('native', age).map(x => `${x}歳`),
       };
     }
     if (won) {
       return {
         ko: priceWord(won), ja: `${fmt(won)}ウォン`,
-        slips: [priceInNative(won)], wrongJa: closePrices(won).map(x => `${fmt(x)}ウォン`),
+        slips: [slip(priceInNative(won), 'native', leadOf(won))], wrongJa: closePrices(won).map(x => `${fmt(x)}ウォン`),
       };
     }
     const item = itemById(id);
     const unitJa = unitsOf(item.c)[item.c];
     return {
       ko: `${item.ko} ${nativeBeforeUnit(n)} ${item.c}`, ja: `${item.ja} ${n}${unitJa}`,
-      slips: [`${item.ko} ${sinoWord(n)} ${item.c}`],
+      slips: [slip(`${item.ko} ${sinoWord(n)} ${item.c}`, 'sino', n)],
       wrongJa: wrongNumbers('native', n).map(x => `${item.ja} ${x}${unitJa}`),
     };
   }
@@ -1792,7 +1823,12 @@
       ...base,
       prompt: '韓国語で言うと？',
       show: { text: jaBe, lang: 'ja' },
-      choices: choiceSet(word, [...slips.map(politeBe), ...beMistakes(ko)], 'ko'),
+      choices: choiceSet(
+        word,
+        [...slips.map(entry => politeBe(entry.text)), ...beMistakes(ko)],
+        'ko',
+        slips.map(entry => ({ ...entry, text: politeBe(entry.text) })),
+      ),
     };
   }
 
@@ -1863,6 +1899,7 @@
       head: head(count),
       ko: `${head(count)} ${right}`,
       ja: `${jaHead(n)}${verbJa(verb, form)}`,
+      slips: bare ? [] : [slip(`${head(sinoWord(n))} ${right}`, 'sino', n)],
       wrong: bare ? miss.map(x => `${item.ko} ${x}`) : [
         ...(plain === count ? [] : [`${head(plain)} ${right}`]),
         `${head(sinoWord(n))} ${right}`,
@@ -1880,7 +1917,7 @@
 
   function buildLine(spec) {
     const { item, verb: verbId, n, form, ask, listen } = spec;
-    const { verb, head, ko, ja, wrong, wrongJa } = lineParts(spec);
+    const { verb, head, ko, ja, wrong, wrongJa, slips } = lineParts(spec);
     const base = {
       key: `line:${verbId}:${item}:${n}:${form}:${ask}`,
       word: ko,
@@ -1899,7 +1936,7 @@
         choices: choiceSet(formOf(verb, form), missOf(verb, form), 'ko'),
       };
     }
-    return { ...base, prompt: '韓国語で言うと？', show: { text: ja, lang: 'ja' }, choices: choiceSet(ko, wrong, 'ko') };
+    return { ...base, prompt: '韓国語で言うと？', show: { text: ja, lang: 'ja' }, choices: choiceSet(ko, wrong, 'ko', slips) };
   }
 
   // 「세 시에 가요」のように、時刻のあとに言葉が続く文
@@ -1921,7 +1958,7 @@
         ...(plain === count ? [] : [say(`${plain} 시`)]),
         ...miss,
         ...near.map(x => say(hourWord(x))),
-      ], 'ko'),
+      ], 'ko', [slip(say(`${sinoWord(h)} 시`), 'sino', h)]),
     };
   }
 
@@ -1948,6 +1985,7 @@
     return {
       ko: politeBe(ko),
       ja: `${n}${jaUnit}です`,
+      slips: [slip(politeBe(`${sinoWord(n)} ${unit}`), 'sino', n)],
       wrong: [
         ...(plain === count ? [] : [politeBe(`${plain} ${unit}`)]),
         politeBe(`${sinoWord(n)} ${unit}`),
@@ -1960,14 +1998,15 @@
   }
 
   function lineAnswer(spec, slipForm) {
-    const { verb, head, ko, ja, wrong, wrongJa } = lineParts(spec);
-    return { ko, ja, wrong: [`${head} ${formOf(verb, slipForm)}`, ...wrong], wrongJa, how: howOfForm(verb, spec.form) };
+    const { verb, head, ko, ja, wrong, wrongJa, slips } = lineParts(spec);
+    return { ko, ja, slips, wrong: [`${head} ${formOf(verb, slipForm)}`, ...wrong], wrongJa, how: howOfForm(verb, spec.form) };
   }
 
   const TALKS = {
     hour: ({ n }) => ({
       ask: '지금 몇 시예요?', askJa: '今何時ですか',
       ko: politeBe(hourWord(n)), ja: `${n}時です`,
+      slips: [slip(politeBe(`${sinoWord(n)} 시`), 'sino', n)],
       wrong: [politeBe(`${sinoWord(n)} 시`), `${hourWord(n)}이에요`, `${hourWord(n)}에요`, ...wrongNumbers('native', n, range(1, 12)).map(x => politeBe(hourWord(x)))],
       wrongJa: wrongNumbers('native', n, range(1, 12)).map(x => `${x}時です`),
       how: '時は「ひとつ」の数え方です',
@@ -1977,6 +2016,7 @@
     price: ({ n }) => ({
       ask: '얼마예요?', askJa: 'いくらですか',
       ko: politeBe(priceWord(n)), ja: `${fmt(n)}ウォンです`,
+      slips: [slip(politeBe(priceInNative(n)), 'native', leadOf(n))],
       wrong: [politeBe(priceInNative(n)), `${priceWord(n)}예요`, ...closePrices(n).map(x => politeBe(priceWord(x)))],
       wrongJa: closePrices(n).map(x => `${fmt(x)}ウォンです`),
       how: '値段は「いち」の数え方です',
@@ -2011,6 +2051,7 @@
       return {
         ask: '몇 시에 자요?', askJa: '何時に寝ますか',
         ko: `${hourWord(n)}에 자요`, ja: `${n}時に寝ます`,
+        slips: [slip(`${sinoWord(n)} 시에 자요`, 'sino', n)],
         wrong: [`${sinoWord(n)} 시에 자요`, `${hourWord(n)}에 자아요`, ...near.map(x => `${hourWord(x)}에 자요`)],
         wrongJa: near.map(x => `${x}時に寝ます`),
         how: '時は「ひとつ」の数え方、에 = 〜に',
@@ -2019,7 +2060,7 @@
   };
 
   function buildTalk(spec) {
-    const { ask, askJa, ko, ja, wrong, wrongJa, how } = TALKS[spec.id](spec);
+    const { ask, askJa, ko, ja, wrong, wrongJa, how, slips = [] } = TALKS[spec.id](spec);
     const name = [spec.id, spec.n, spec.item, spec.verb, spec.word].filter(Boolean).join(':');
     const base = {
       key: `talk:${name}`,
@@ -2030,7 +2071,13 @@
       how: { text: `${ask} = ${askJa}。${how}` },
     };
     if (spec.listen) return { ...base, prompt: '聞こえた答えの意味は？', choices: choiceSet(ja, wrongJa, 'ja') };
-    return { ...base, prompt: 'どう答える？', show: { text: ask, lang: 'ko' }, gloss: `「${ja}」と答える`, choices: choiceSet(ko, wrong, 'ko') };
+    return {
+      ...base,
+      prompt: 'どう答える？',
+      show: { text: ask, lang: 'ko' },
+      gloss: `「${ja}」と答える`,
+      choices: choiceSet(ko, wrong, 'ko', slips),
+    };
   }
 
   const BUILDERS = {
@@ -2113,6 +2160,9 @@
     ...distinct(2, () => digit() * 10000 + digit() * 1000 + digit() * 100),
   ]);
 
+  // 1万ウォン以上の値段。Lv.9のあとのコンビニ回と会話でも使って、만 の言い方を忘れないようにする
+  const manPrice = () => pickOne([digit() * 10000, digit() * 10000 + digit() * 1000]);
+
   // 日付：形が変わる6月と10月は毎回出す
   const levelSevenSpecs = () => [
     ...distinct(8, () => pickDate(range(1, 12).filter(m => m !== 6 && m !== 10))),
@@ -2132,9 +2182,10 @@
   }
 
   // 時刻：形が変わる1〜4時と11時、12時を6つ、ほかを4つ。切りのいい時間、分のある時間、半を混ぜる
+  // 分には40分と50分を毎回出す。마흔 や 쉰 と言ってしまいやすいので、사십 분・오십 분 と比べて覚える
   function levelElevenSpecs() {
     const hours = shuffle([...sample([1, 2, 3, 4, 11, 12], 6), ...sample(range(5, 10), 4)]);
-    const minutes = sample(range(5, 55, 5), 4);
+    const minutes = shuffle([40, 50, ...sample(range(5, 55, 5).filter(m => m !== 40 && m !== 50), 2)]);
     return halfListening(hours.map((h, i) => {
       if (i < 4) return { t: 'time', h };
       if (i < 8) return { t: 'time', h, m: minutes[i - 4] };
@@ -2142,11 +2193,11 @@
     }));
   }
 
-  // 年齢を3問、新しい数え方を7問。스무 살 は毎回出す
+  // 年齢を4問、新しい数え方を6問。스무 살 と、形の覚えにくい40〜50代と60〜90代を毎回出す
   function levelTwelveSpecs() {
-    const ages = [20, pickOne(range(11, 19)), pickOne(range(21, 49).filter(n => n % 10))].map(n => ({ t: 'age', n }));
-    const numbers = shuffle([1, 2, 3, 4, ...sample(range(5, 10), 3)]);
-    const counts = countSpecs(numbers, ['ko', 'ko', 'unit', 'unit', 'ja', 'listen', 'listen'], false, MORE_UNITS, MORE_ITEMS);
+    const ages = [20, pickOne(range(11, 19)), pickOne(range(40, 59)), pickOne(range(60, 99))].map(n => ({ t: 'age', n }));
+    const numbers = shuffle([1, 2, 3, 4, ...sample(range(5, 10), 2)]);
+    const counts = countSpecs(numbers, ['ko', 'unit', 'unit', 'ja', 'listen', 'listen'], false, MORE_UNITS, MORE_ITEMS);
     return spaced([...someListening(ages, 1), ...counts]);
   }
 
@@ -2212,7 +2263,7 @@
       { t: 'talk', id: 'hour', n: pickOne(range(1, 12)) },
       { t: 'talk', id: 'age', n: pickOne([19, 20, 21, 22, 25, 30, 34]) },
       { t: 'talk', id: 'people', n: pickOne(range(1, 5)) },
-      { t: 'talk', id: 'price', n: digit() * 1000 + digit() * 100 },
+      { t: 'talk', id: 'price', n: manPrice() },
       { t: 'talk', id: 'did', ...did },
       { t: 'talk', id: 'plan', ...plan },
       { t: 'talk', id: 'want', ...want },
@@ -2264,13 +2315,14 @@
     ];
   }
 
-  // コンビニ4：数える言葉で注文して、閉店の時間を聞く
+  // コンビニ4：数える言葉で注文して、1万ウォン以上の値段を言い、閉店の時間を聞く
   function shopFourSpecs() {
-    const orders = sample(['coffee', 'tea', 'juice', 'beer', 'soju', 'water', 'magazine'], 6)
+    const orders = sample(['coffee', 'tea', 'juice', 'beer', 'soju', 'water', 'magazine'], 5)
       .map(item => ({ t: 'order', item, n: pickOne(range(1, 5)) }));
     const [late, later] = sample(range(8, 12), 2);
     return [
       ...someListening(orders, 2),
+      { t: 'price', n: manPrice() },
       { t: 'phrase', id: 'closing' },
       { t: 'hours', h: late },
       { t: 'hours', h: later, listen: true },
@@ -2287,7 +2339,7 @@
       { t: 'phrase', id: 'howMuch' },
       bought(one, 'blank'),
       bought(two, 'whole'),
-      { t: 'be', won: digit() * 1000, ask: 'make' },
+      { t: 'be', won: manPrice(), ask: 'make' },
       { t: 'be', won: digit() * 1000 + digit() * 100, ask: 'make', listen: true },
       pickLine('drink', 'present', 'whole'),
       pickLine('eat', 'past', 'whole'),
@@ -2296,9 +2348,9 @@
     ];
   }
 
-  // コンビニ6：店員さんの言葉を聞き取り、したいこと、しないことを話す
+  // コンビニ6：店員さんの言葉を聞き取り、したいこと、しないこと、値段を話す
   function shopSixSpecs() {
-    const lines = sample(Object.keys(STAFF), 4).map((id, i) => ({ t: 'staff', id, ...(i < 3 && { listen: true }) }));
+    const lines = sample(Object.keys(STAFF), 3).map(id => ({ t: 'staff', id, listen: true }));
     return [
       lines[0],
       pickLine('drink', 'want', 'whole'),
@@ -2308,7 +2360,7 @@
       lines[2],
       pickLine('eat', 'want', 'blank'),
       { t: 'verb', id: 'spicy', form: 'present', ask: 'make' },
-      lines[3],
+      { t: 'be', won: manPrice(), ask: 'make' },
       pickLine('buy', 'plan', 'whole'),
     ];
   }
@@ -2419,14 +2471,14 @@
     {
       level: 11, name: '時刻', sample: '세 시 삼십 분', pairs: true,
       note: '時刻は2つの数え方を組み合わせます。時は「ひとつ」の数え方で、形が変わる세や두を使います。分は「いち」の数え方です。시は時、분は分、반は半です。',
-      cards: [['1時', hourWord(1)], ['3時', hourWord(3)], ['12時', hourWord(12)], ['10分', minuteWord(10)], ['30分', minuteWord(30)], ['3時半', `${hourWord(3)} 반`]],
+      cards: [['1時', hourWord(1)], ['3時', hourWord(3)], ['12時', hourWord(12)], ['30分', minuteWord(30)], ['40分', minuteWord(40)], ['3時半', `${hourWord(3)} 반`]],
       hero: [['3時', hourWord(3)], ['30分', minuteWord(30)]],
       specs: levelElevenSpecs,
     },
     {
       level: 12, name: '年齢と数える言葉', sample: '스무 살, 책 두 권', pairs: true,
-      note: '年齢は살をつけて、「ひとつ」の数え方で言います。20歳は스물ではなく스무 살です。新しい数える言葉は、권（冊）、장（枚）、마리（匹）、대（台）です。',
-      cards: [['20歳', '스무 살'], ['本2冊', '책 두 권'], ['写真3枚', '사진 세 장'], ['猫1匹', '고양이 한 마리'], ['車1台', '자동차 한 대']],
+      note: '年齢は살をつけて、「ひとつ」の数え方で言います。20歳は스물ではなく스무 살です。40歳は마흔 살で、40分の사십 분とは数え方が違います。新しい数える言葉は、권（冊）、장（枚）、마리（匹）、대（台）です。',
+      cards: [['20歳', '스무 살'], ['40歳', '마흔 살'], ['本2冊', '책 두 권'], ['写真3枚', '사진 세 장'], ['猫1匹', '고양이 한 마리'], ['車1台', '자동차 한 대']],
       hero: [['20歳', '스무 살'], ['本2冊', '책 두 권']],
       specs: levelTwelveSpecs,
     },
@@ -2686,16 +2738,192 @@
     }
   }
 
-  function addMistake(q) {
+  // 間違えた問題を保存する。picked は選んだ答え、mixed は数え方を取り違えたときの印
+  function addMistake(q, choice) {
+    const { why, ...spec } = q.spec;
     const before = store.data.review[q.key];
-    store.data.review[q.key] = { spec: q.spec, misses: (before ? before.misses : 0) + 1, at: Date.now() };
+    store.data.review[q.key] = {
+      spec,
+      misses: (before ? before.misses : 0) + 1,
+      at: Date.now(),
+      ...(choice && { picked: choice.text }),
+      ...(choice && choice.mixed && { mixed: choice.mixed }),
+    };
   }
 
   const reviewCount = () => Object.keys(store.data.review).length;
 
+  /* ━━ 苦手の自動判定 ━━
+     復習では、間違えた問題のあとに、間違え方に合わせた問題を足す。
+     ・似た問題：同じ種類のまま、形の近い数や、同じ変わり方をする別の言葉に変える（마흔 なら 마흔다섯 や 일흔）
+     ・2回以上間違えた問題は、似た問題を2問にする
+     ・選んだ答えがもう一方の数え方だったら、同じ数をその数え方で言う場面も出して、使い分けを確かめる */
+
+  const WHY_LABEL = { similar: '似た問題', contrast: '使い分け' };
+  const CHANGING_HOURS = [1, 2, 3, 4, 11, 12]; // 시 の前で形が変わる時
+
+  function pickOther(list, value) {
+    const rest = list.filter(x => x !== value);
+    return rest.length ? pickOne(rest) : null;
+  }
+
+  // 形の近い数：1桁なら1桁、10台なら10台。20以上は同じ十の位か、取り違えやすい十の位（마흔 と 일흔 など）
+  function nearNumber(n, sys = 'native', [min, max] = [1, 99]) {
+    const ten = n - n % 10;
+    const one = n % 10;
+    let pools;
+    if (n <= 10) pools = [range(1, 10)];
+    else if (n < 20) pools = [range(11, 19), range(1, 10)];
+    else {
+      const look = sys === 'native'
+        ? LOOK_NATIVE[ten] || []
+        : (LOOK_SINO[ten / 10] || []).filter(x => x < 10).map(x => x * 10);
+      const sameTen = range(ten, Math.min(ten + 9, 99));
+      const otherTens = look.filter(x => x >= 20).map(x => x + one);
+      pools = Math.random() < .5 ? [otherTens, sameTen] : [sameTen, otherTens];
+    }
+    for (const pool of pools) {
+      const found = pickOther(pool.filter(x => x >= min && x <= max), n);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  // 似た値段：0の位置はそのままで、ほかの桁を変える（36,000 → 72,000）
+  function nearPrice(n) {
+    for (let tries = 0; tries < 20; tries++) {
+      const next = Number([...String(n)].map(d => (d === '0' ? d : String(digit()))).join(''));
+      if (next !== n) return next;
+    }
+    return null;
+  }
+
+  // 似た日付：形が変わる6月と10月はその2つから。日は1桁なら1桁、2桁なら2桁
+  function nearDate(m, d) {
+    const month = m === 6 || m === 10 ? pickOne([6, 10]) : pickOther(range(1, 12).filter(x => x !== 6 && x !== 10), m);
+    const day = pickOther(d <= 10 ? range(1, 10) : range(11, 28), month === m ? d : 0);
+    return { m: month, d: day };
+  }
+
+  const nearHour = h => pickOther(CHANGING_HOURS.includes(h) ? CHANGING_HOURS : range(5, 10), h);
+  const nearMinute = m => pickOther(range(5, 55, 5), m);
+  const totalOf = cart => cart.reduce((sum, [id, qty]) => sum + goodById(id).price * qty, 0);
+
+  // 似た動詞：同じ形を、同じ変わり方をする別の言葉で
+  function similarVerb(id, form) {
+    const verb = verbById(id);
+    if (!verb) return null;
+    const hasForm = other => (form === 'want' ? VERBS.includes(other) : Boolean(other[form]));
+    if (VERBS.includes(verb)) return pickOther(VERBS.filter(hasForm).map(other => other.id), id);
+    const usable = HARD_WORDS.filter(hasForm);
+    const sameWay = usable.filter(other => other.why === verb.why || (verb.lost && other.lost));
+    return pickOther(sameWay.map(other => other.id), id) ?? pickOther(usable.map(other => other.id), id);
+  }
+
+  function similarBe(spec, change) {
+    if (spec.noun) {
+      const noun = NOUNS.find(entry => entry.id === spec.noun);
+      if (!noun) return null;
+      const sameEnd = NOUNS.filter(entry => hasFinal(entry.ko) === hasFinal(noun.ko)).map(entry => entry.id);
+      return change({ noun: pickOther(sameEnd, spec.noun) });
+    }
+    if (spec.hour) return change({ hour: nearHour(spec.hour) });
+    if (spec.age) return change({ age: nearNumber(spec.age, 'native', [11, 99]) });
+    if (spec.won) return change({ won: nearPrice(spec.won) });
+    if (spec.item) return change({ n: nearNumber(spec.n, 'native', [1, 5]) });
+    return null;
+  }
+
+  // 否定の文には数がないので、物を変える
+  function similarLine(spec, change) {
+    const items = LINE_ITEMS[spec.verb] || [];
+    if (spec.form === 'neg') return change({ item: pickOther(items, spec.item) });
+    return change({ n: nearNumber(spec.n, 'native', [1, 5]), item: pickOne(items) });
+  }
+
+  function similarTalk(spec, change) {
+    switch (spec.id) {
+      case 'hour': return change({ n: nearHour(spec.n) });
+      case 'sleep': return change({ n: pickOther([9, 10, 11, 12], spec.n) });
+      case 'age': return change({ n: nearNumber(spec.n, 'native', [11, 99]) });
+      case 'people': return change({ n: nearNumber(spec.n, 'native', [1, 5]) });
+      case 'price': return change({ n: nearPrice(spec.n) });
+      case 'did': case 'plan': case 'want': return similarLine(spec, change);
+      case 'no': return change({ item: pickOther(LINE_ITEMS[spec.verb] || [], spec.item) });
+      case 'weather': return change({ word: pickOther(['cold', 'hot'], spec.word) });
+      default: return null;
+    }
+  }
+
+  // 同じ種類の似た問題。決まった言い回しは似た問題を作らず、同じ問題をもう一度出すだけにする
+  function similarSpec(spec) {
+    const change = fields => (Object.values(fields).some(value => value === null || value === undefined) ? null : { ...spec, ...fields });
+    switch (spec.t) {
+      case 'num': return change({ n: nearNumber(spec.n, spec.sys, spec.pool || [1, 99]) });
+      case 'cnt': return change({ n: nearNumber(spec.n, 'native', spec.early ? [1, 10] : [1, 99]) });
+      case 'age': return change({ n: nearNumber(spec.n, 'native', [11, 99]) });
+      case 'bag': case 'buy': case 'order': return change({ n: nearNumber(spec.n, 'native', [1, 5]) });
+      case 'price': return change({ n: nearPrice(spec.n) });
+      case 'total': {
+        const { cart, ...rest } = spec;
+        const n = nearPrice(totalOf(cart));
+        return n && { ...rest, t: 'price', n };
+      }
+      case 'date': return change(nearDate(spec.m, spec.d));
+      case 'time': return change({ h: nearHour(spec.h), ...(spec.m && !spec.half && { m: nearMinute(spec.m) }) });
+      case 'clock': case 'hours': return change({ h: nearHour(spec.h) });
+      case 'be': return similarBe(spec, change);
+      case 'verb': return change({ id: similarVerb(spec.id, spec.form) });
+      case 'line': return similarLine(spec, change);
+      case 'talk': return similarTalk(spec, change);
+      default: return null;
+    }
+  }
+
+  // 数え方の取り違え：「いち」で言ってしまったら、同じ数を「いち」で言う日付か値段を。
+  // 「ひとつ」で言ってしまったら、同じ数を「ひとつ」で言う物の数を出す
+  const isMix = mixed => Boolean(mixed) && ['sino', 'native'].includes(mixed.sys)
+    && Number.isInteger(mixed.n) && mixed.n >= 1 && mixed.n <= 99;
+
+  function contrastSpec({ sys, n }) {
+    if (sys === 'native') return { t: 'cnt', item: pickOne(ITEMS).id, n, ask: 'ko' };
+    if (n <= 12 && Math.random() < .5) return { t: 'date', m: n, d: pickOne(range(1, 28)) };
+    return { t: 'price', n: n * 1000 };
+  }
+
+  // 復習で足す問題。2回以上間違えた問題は2問。taken は同じ回に出る問題で、同じものを2回出さない
+  function followUps(entry, taken = new Set()) {
+    const count = entry.misses >= 2 ? 2 : 1;
+    const seen = taken;
+    seen.add(build(entry.spec).key);
+    const extras = [];
+    const add = (spec, why) => {
+      if (!spec || extras.length >= count || !canBuild(spec)) return;
+      const { key } = build(spec);
+      if (seen.has(key)) return;
+      seen.add(key);
+      extras.push({ ...spec, why });
+    };
+    try {
+      if (isMix(entry.mixed)) add(contrastSpec(entry.mixed), 'contrast');
+      for (let tries = 0; tries < 12 && extras.length < count; tries++) add(similarSpec(entry.spec), 'similar');
+    } catch { /* 古い形の記録から作れないときは、似た問題を足さない */ }
+    return extras;
+  }
+
+  // 復習の1回分：2回以上間違えた問題を先に選ぶ。間違えた問題を出し終えてから、似た問題を出す
   function reviewSpecs() {
-    const newest = Object.values(store.data.review).sort((a, b) => b.at - a.at).slice(0, ROUND_SIZE);
-    return shuffle(newest.map(entry => entry.spec));
+    const entries = Object.values(store.data.review)
+      .sort((a, b) => Number(b.misses > 1) - Number(a.misses > 1) || b.at - a.at);
+    const firsts = [];
+    const extras = [];
+    const taken = new Set(Object.keys(store.data.review));
+    for (const entry of entries) {
+      if (firsts.length + extras.length >= ROUND_SIZE) break;
+      firsts.push(entry.spec);
+      extras.push(...followUps(entry, taken).slice(0, ROUND_SIZE - firsts.length - extras.length));
+    }
+    return [...shuffle(firsts), ...shuffle(extras)];
   }
 
   const dayKey = date => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
@@ -3176,9 +3404,16 @@
     const { course: progress, totals, streak, best, history, review } = store.data;
     const missed = Object.values(review)
       .sort((a, b) => b.misses - a.misses)
-      .map(({ spec, misses, at }) => {
+      .map(({ spec, misses, at, picked, mixed }) => {
         const q = build(spec);
-        return { pair: q.pair, listen: q.listen, misses, at: new Date(at).toISOString().slice(0, 10) };
+        return {
+          pair: q.pair,
+          listen: q.listen,
+          misses,
+          at: new Date(at).toISOString().slice(0, 10),
+          ...(typeof picked === 'string' && { picked }),
+          ...(isMix(mixed) && { mixed: mixed.sys }),
+        };
       });
     return JSON.stringify({ progress, totals, streak, best, history, missed });
   }
@@ -3341,7 +3576,8 @@
       el.counter.textContent = `${round.index + 1} / ${round.specs.length}`;
       el.track.children[round.index].dataset.state = 'now';
     }
-    el.prompt.textContent = q.prompt;
+    const why = WHY_LABEL[round.specs[round.index].why];
+    el.prompt.replaceChildren(...(why ? [make('span', 'why', why)] : []), q.prompt);
     el.prompt.classList.remove('verdict');
     el.reveal.replaceChildren();
     el.say.hidden = true;
@@ -3392,7 +3628,7 @@
     if (correct) totals.correct += 1;
     totals.bestCombo = Math.max(totals.bestCombo, round.combo);
     touchStreak();
-    if (!correct) addMistake(q);
+    if (!correct) addMistake(q, q.choices[i]);
     else if (round.mode === 'review') delete store.data.review[q.key];
     store.save();
 
@@ -3548,10 +3784,12 @@
       goNext.onclick = () => openLesson(onward);
     }
 
+    // 似た問題が入るので、問題数は作ってから数える
     const review = $('review');
+    const nextReview = remaining ? reviewSpecs() : [];
     review.hidden = remaining === 0;
-    review.textContent = `${isReview ? '続けて復習する' : '間違えた問題を復習する'}（${Math.min(remaining, ROUND_SIZE)}問）`;
-    review.onclick = () => startRound(reviewSpecs(), 'review');
+    review.textContent = `${isReview ? '続けて復習する' : '間違えた問題を復習する'}（${nextReview.length}問）`;
+    review.onclick = () => startRound(nextReview, 'review');
 
     const retry = $('retry');
     retry.hidden = isReview;
@@ -3740,6 +3978,7 @@
   if (window.__QUIZ_HOOK__) {
     window.__QUIZ_HOOK__({
       build, store, sound, LESSONS, attackSpecs, nextLesson, reviewSpecs,
+      similarSpec, contrastSpec, followUps, nearNumber, nearPrice, nearDate, isMix, canBuild,
       ITEMS, MORE_ITEMS, GOODS, PHRASES, MORE_PHRASES, STAFF, NOUNS, VERBS, HARD_WORDS, LINE_ITEMS, CLOCK_VERBS,
       ROUND_BIG, DAYS_IN_MONTH, range,
       playSpec: spec => startRound([spec], 'attempt'),
