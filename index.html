@@ -3410,8 +3410,15 @@
       out.connect(ctx.destination);
       const state = { ctx, out, next: 0, index: 0, busy: false, sources: new Set(), starts: [] };
       live = state;
-      state.timer = setInterval(() => pump(state), 1000);
+      state.timer = setInterval(() => { revive(state); pump(state); }, 1000);
       pump(state);
+    }
+
+    // 読み上げなどに音を止められると、iPhoneでは音の土台が止まったままになる。毎秒確かめて動かし直す
+    function revive(state) {
+      if (live !== state || document.hidden) return;
+      const { ctx } = state;
+      if (ctx.state === 'suspended' || ctx.state === 'interrupted') Promise.resolve().then(() => ctx.resume()).catch(() => {});
     }
 
     function stop() {
@@ -3441,15 +3448,16 @@
     let engine = null;
 
     // iPhoneに音の扱いを伝える。対応していない端末では何もしない。
-    // BGM を鳴らすときは playback（マナーモードでも鳴らす。ほかのアプリの音楽は止まる）、
-    // 鳴らさないときは ambient（流れている音楽と重ねて鳴らす）
-    const sessionType = () => (store.data.music ? 'playback' : 'ambient');
+    // BGM のあるなしにかかわらず ambient（ほかの音と重ねて鳴らす）にする。playback にすると、
+    // iOS 27 では読み上げが始まった瞬間に BGM ごと止められる（WebKit の不具合 218815。
+    // 読み上げが「ほかの音を止める」扱いで鳴るため。重ねて鳴らす扱いの音は止められない）
+    const SESSION = 'ambient';
     function setSession(type) {
       try {
         if (navigator.audioSession) navigator.audioSession.type = type;
       } catch { /* 指定できなくても音は鳴らす */ }
     }
-    setSession(sessionType());
+    setSession(SESSION);
 
     // 画面を離れたら BGM を止め、戻ったらまた鳴らす。
     // iPhoneは別のアプリから戻ると音が出なくなることがあるので、音の土台を作り直す
@@ -3466,7 +3474,7 @@
       engine = null;
       setSession('auto');
       Promise.resolve().then(() => old.close()).catch(() => {}).then(() => {
-        setSession(sessionType());
+        setSession(SESSION);
         wake();
       });
     });
@@ -3476,7 +3484,7 @@
       if (!AudioEngine) return null;
       try {
         if (!engine) {
-          setSession(sessionType());
+          setSession(SESSION);
           engine = new AudioEngine();
         }
         if (engine.state !== 'running') Promise.resolve(engine.resume()).catch(() => {});
@@ -3495,7 +3503,6 @@
 
     // BGM の設定を切り替えたあとに呼ぶ
     function setMusic() {
-      setSession(sessionType());
       if (store.data.music) wake();
       else music.stop();
     }
